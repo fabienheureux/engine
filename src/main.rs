@@ -1,8 +1,9 @@
+mod game_loop;
 mod render;
 mod shader;
 mod utils;
 
-use crate::render::Render;
+use crate::{game_loop::GameLoop, render::Render};
 use gl;
 use glutin::{
     ContextBuilder, Event, EventsLoop, GlContext, GlWindow, WindowBuilder,
@@ -11,8 +12,6 @@ use glutin::{
 use std::error::Error;
 
 const GAME_TITLE: &'static str = "Neo Pac-Man";
-// 16.6ms per frame for 60 frames per second.
-const FPS: i32 = 60;
 
 fn main() -> Result<(), Box<Error>> {
     let mut event_loop = EventsLoop::new();
@@ -24,12 +23,11 @@ fn main() -> Result<(), Box<Error>> {
     unsafe { gl_window.make_current()? }
 
     let render = Render::new(gl_window);
+    let mut game_loop = GameLoop::new();
 
-    let mut running = true;
-    while running {
-        let now = utils::now();
-
+    game_loop.run(|| {
         // Process inputs.
+        let mut running = true;
         event_loop.poll_events(|event| match event {
             Event::WindowEvent {
                 event: WindowEvent::CloseRequested,
@@ -41,20 +39,8 @@ fn main() -> Result<(), Box<Error>> {
         // Render frame.
         render.draw();
 
-        //
-        // Synchronize loop
-        //
-        let sleep_time = utils::compute_sleep_duration(now, FPS)?;
-        // If sleep_time is negative, we don't want to sleep the main
-        // thread because the current tick already takes longer than 16ms.
-        if sleep_time.is_some() {
-            let time = sleep_time.unwrap();
-            println!("Thread sleep for: {:?}", time);
-            std::thread::sleep(time);
-        } else {
-            println!("Frame drop occurs here...");
-        }
-    }
+        running
+    });
 
     Ok(())
 }
