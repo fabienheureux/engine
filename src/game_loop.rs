@@ -23,7 +23,6 @@ impl GameLoop {
             self.is_paused = false;
 
             self.is_running = process();
-
             self.sync_loop(now);
         }
     }
