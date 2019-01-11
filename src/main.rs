@@ -2,7 +2,6 @@ mod game_controller;
 mod game_loop;
 mod render;
 mod shader;
-mod utils;
 
 use crate::{
     game_controller::{GameController, Input},
@@ -27,7 +26,7 @@ fn main() -> Result<(), Box<Error>> {
     let mut game_controller = GameController::new(event_loop);
     let mut game_loop = GameLoop::new();
 
-    game_loop.run(|| {
+    game_loop.run(|_| {
         // Process inputs.
         let mut running = true;
         let input = game_controller.pull();

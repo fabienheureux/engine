@@ -18,6 +18,9 @@ impl Render {
             gl::load_with(|symbol| {
                 gl_window.get_proc_address(symbol) as *const _
             });
+
+            gl::Enable(gl::CULL_FACE);
+            gl::Enable(gl::BLEND);
             gl::ClearColor(0.0, 1.0, 0.0, 1.0);
         }
 
