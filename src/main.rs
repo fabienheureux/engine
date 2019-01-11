@@ -12,7 +12,7 @@ use gl;
 use glutin::{ContextBuilder, EventsLoop, GlContext, GlWindow, WindowBuilder};
 use std::error::Error;
 
-const GAME_TITLE: &'static str = "Neo Pac-Man";
+const GAME_TITLE: &str = "Neo Pac-Man";
 
 fn main() -> Result<(), Box<Error>> {
     let window = WindowBuilder::new().with_title(GAME_TITLE);

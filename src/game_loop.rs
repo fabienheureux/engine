@@ -79,8 +79,8 @@ impl GameLoop {
 
         let dt = dt.unwrap();
         // Cast Duration into float secs.
-        return (dt.as_secs() as f64)
-            + (dt.subsec_nanos() as f64) / (1_000_000_000 as f64);
+        (dt.as_secs() as f64)
+            + f64::from(dt.subsec_nanos()) / f64::from(1_000_000_000)
     }
 
     /// Compute sleep duration from a given SystemTime.
