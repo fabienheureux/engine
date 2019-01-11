@@ -64,17 +64,17 @@ impl GameLoop {
 
     fn compute_dt(&self) -> f64 {
         if self.last_time.is_none() || self.current_time.is_none() {
-            panic!("wtf");
+            unimplemented!();
         }
 
-        // Safely unwrapping values here.
+        // Safely unwrapping time values here.
         let last_time = self.last_time.unwrap();
         let current_time = self.current_time.unwrap();
 
         let dt = current_time.duration_since(last_time);
 
         if dt.is_err() {
-            panic!("wtf");
+            unimplemented!();
         }
 
         let dt = dt.unwrap();
