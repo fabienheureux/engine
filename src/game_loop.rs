@@ -1,102 +1,60 @@
-use std::time::{Duration, SystemTime, SystemTimeError};
+use crate::time::Time;
+use std::time::Duration;
 
 // 16.6ms per frame for 60 frames per second.
-const FPS: i32 = 60;
+const FPS: u32 = 60;
 
 #[derive(Default)]
 pub struct GameLoop {
-    frame_rate: i32,
+    frame_rate: Duration,
+    frame_number: u64,
     is_running: bool,
-    // Time stuff
-    last_time: Option<SystemTime>,
-    current_time: Option<SystemTime>,
-}
-
-pub fn now() -> SystemTime {
-    SystemTime::now()
+    time: Time,
 }
 
 impl GameLoop {
     pub fn new() -> Self {
         Self {
-            frame_rate: FPS,
+            frame_rate: Duration::from_secs(1) / FPS,
             ..Self::default()
         }
     }
 
-    pub fn run(&mut self, mut update: impl FnMut(f64) -> bool) {
+    /// Start the game loop.
+    pub fn start(&mut self, mut update: impl FnMut(&Time) -> bool) {
         self.is_running = true;
-
-        self.last_time = None;
-        self.current_time = Some(now());
+        self.time.now = Time::now();
 
         while self.is_running {
             self.update_time();
-            let dt = self.compute_dt();
 
-            self.is_running = update(dt);
+            self.is_running = update(&self.time);
 
+            self.frame_number += 1;
             self.sync_loop();
         }
     }
 
-    // Synchronize loop to draw stuff at 60FPS.
-    //
-    // This function will sleep the main thread only if the current tick took less than
-    // 16.6ms to complete. If not, do nothing (yet).
+    /// Synchronize loop to draw stuff at 60FPS.
+    ///
+    /// This function will sleep the main thread only if the current tick took less than
+    /// 16.6ms to complete. If not, do nothing (yet).
     fn sync_loop(&mut self) {
-        let now = self.current_time.unwrap();
+        // This will set `None` if the computed duration is negative.
         let sleep_time =
-            Self::compute_sleep_duration(self.frame_rate, now).unwrap();
+            (self.time.now + self.frame_rate).checked_sub(Time::now());
 
-        // The `checked_sub` method return `None` for negative result.
-        if sleep_time.checked_sub(Duration::default()).is_some() {
+        if let Some(sleep_time) = sleep_time {
             std::thread::sleep(sleep_time);
         } else {
-            println!("Frame drop occurs here...");
+            unimplemented!();
         }
     }
 
     fn update_time(&mut self) {
-        self.last_time = self.current_time;
-        self.current_time = Some(now());
-    }
-
-    fn compute_dt(&self) -> f64 {
-        if self.last_time.is_none() || self.current_time.is_none() {
-            unimplemented!();
-        }
-
-        // Safely unwrapping time values here.
-        let last_time = self.last_time.unwrap();
-        let current_time = self.current_time.unwrap();
-
-        let dt = current_time.duration_since(last_time);
-
-        if dt.is_err() {
-            unimplemented!();
-        }
-
-        let dt = dt.unwrap();
-        // Cast Duration into float secs.
-        (dt.as_secs() as f64)
-            + f64::from(dt.subsec_nanos()) / f64::from(1_000_000_000)
-    }
-
-    /// Compute sleep duration from a given SystemTime.
-    /// This function will return `None` if the computed duration
-    /// is negative.
-    fn compute_sleep_duration(
-        frame_rate: i32,
-        from_time: SystemTime,
-    ) -> Result<Duration, SystemTimeError> {
-        let ms_per_frame = Duration::from_millis((1000 / frame_rate) as u64);
-        let elapsed = from_time.elapsed()?;
-
-        // ELAPSED + MS_PER_FRAME - NOW
-        let computed_tine =
-            (elapsed + ms_per_frame) - now().duration_since(from_time)?;
-
-        Ok(computed_tine)
+        self.time.last_time = self.time.now;
+        self.time.now = Time::now();
+        self.time.dt =
+            Time::duration_to_secs(self.time.now - self.time.last_time);
     }
 }

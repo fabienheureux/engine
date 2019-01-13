@@ -46,6 +46,14 @@ impl Shader {
         self.set_matrix4("mvp", mvp.as_slice());
     }
 
+    pub fn set_uniform4f(&self, var_name: &str, values: &(f32, f32, f32, f32)) {
+        let shader_variable = self.get_location(var_name);
+        let (a, b, c, d) = *values;
+        unsafe {
+            gl::Uniform4f(shader_variable, a, b, c, d);
+        }
+    }
+
     #[allow(dead_code)]
     pub fn set_matrix4(&self, var_name: &str, transform: &[f32]) {
         let shader_variable = self.get_location(var_name);

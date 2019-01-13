@@ -1,4 +1,5 @@
 use crate::shader::Shader;
+use crate::time::Time;
 use gl;
 use gl::types::*;
 use glutin::{GlContext, GlWindow};
@@ -21,7 +22,7 @@ impl Render {
 
             gl::Enable(gl::CULL_FACE);
             gl::Enable(gl::BLEND);
-            gl::ClearColor(0.0, 1.0, 0.0, 1.0);
+            gl::ClearColor(0.0, 0.0, 0.0, 1.0);
         }
 
         let vertices: [f32; 9] = [
@@ -68,9 +69,18 @@ impl Render {
         }
     }
 
-    pub fn draw(&self) {
+    pub fn draw(&self, time: &Time) {
         unsafe {
+            // Clear color buffer with the color specified by gl::ClearColor.
+            gl::Clear(gl::COLOR_BUFFER_BIT);
+
             gl::UseProgram(self.shader.id);
+
+            let green_value = time.now_to_secs().sin() / 2. + 0.5;
+
+            self.shader
+                .set_uniform4f("ourColor", &(0., green_value as f32, 0., 1.));
+
             gl::BindVertexArray(self.vao);
             gl::DrawArrays(gl::TRIANGLES, 0, 3);
         }
