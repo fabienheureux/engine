@@ -1,7 +1,7 @@
 use crate::shader::Shader;
 use crate::time::Time;
 use gl;
-use gl::types::{GLfloat, GLsizeiptr, GLsizei};
+use gl::types::{GLfloat, GLsizei, GLsizeiptr};
 use glutin::GlWindow;
 use std::mem;
 use std::os::raw::c_void;
@@ -76,18 +76,20 @@ impl<'a> Render<'a> {
         }
     }
 
-    pub fn draw(&self, _time: &Time, tex_id: u32) {
+    pub fn draw(&self, time: &Time, tex_id: u32) {
         unsafe {
             // Clear color buffer with the color specified by gl::ClearColor.
             gl::Clear(gl::COLOR_BUFFER_BIT);
 
             gl::UseProgram(self.shader.id);
+            self.shader.set_int("ourTexture", tex_id as i32);
 
+            gl::ActiveTexture(gl::TEXTURE0);
             gl::BindTexture(gl::TEXTURE_2D, tex_id);
-            //
-            // let green_value = time.now_to_secs().sin() / 2. + 0.5;
-            // self.shader
-            //     .set_uniform4f("ourColor", &(0., green_value as f32, 0., 1.));
+
+            let green_value = time.now_to_secs().sin() / 2. + 0.5;
+            self.shader
+                .set_uniform4f("ourColor", &(0., green_value as f32, 0., 1.));
 
             gl::BindVertexArray(self.vao);
             gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, ptr::null());

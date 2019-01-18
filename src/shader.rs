@@ -42,6 +42,12 @@ impl Shader {
     }
 
     #[allow(dead_code)]
+    pub fn set_int(&self, var_name: &str, value: i32) {
+        let shader_variable = self.get_location(var_name);
+        unsafe { gl::Uniform1i(shader_variable, value) }
+    }
+
+    #[allow(dead_code)]
     pub fn set_mvp(&self, mvp: glm::Mat4) {
         self.set_matrix4("mvp", mvp.as_slice());
     }
