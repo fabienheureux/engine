@@ -6,7 +6,7 @@ use std::path::Path;
 /// We don't want to keep any texture images in
 /// the memory, so we just store the file path.
 pub struct Texture<'a> {
-    texture_id: u32,
+    pub texture_id: u32,
     texture_path: &'a str,
 }
 
@@ -22,11 +22,11 @@ impl<'a> Texture<'a> {
     /// to the GPU.
     /// For now, there are some openGL config stuff.
     pub fn generate_texture(&mut self) {
-        let image = Self::load(self.texture_path).to_rgba();
+        let image = Self::load(self.texture_path).to_rgb();
         let width = image.width() as i32;
         let height = image.height() as i32;
 
-        let raw_data = image.into_raw().as_ptr() as *const c_void;
+        let raw_data = image.into_raw();
 
         unsafe {
             gl::GenTextures(1, &mut self.texture_id);
@@ -57,13 +57,13 @@ impl<'a> Texture<'a> {
             gl::TexImage2D(
                 gl::TEXTURE_2D,
                 0,
-                gl::RGBA as i32,
+                gl::RGB as i32,
                 width,
                 height,
                 0,
-                gl::RGBA,
+                gl::RGB,
                 gl::UNSIGNED_BYTE,
-                raw_data,
+                &raw_data[0] as *const u8 as *const c_void,
             );
 
             gl::GenerateMipmap(gl::TEXTURE_2D);

@@ -8,6 +8,7 @@ pub struct Time {
 }
 
 impl Time {
+    #[allow(unused)]
     pub fn now_to_secs(&self) -> f64 {
         Self::duration_to_secs(self.now)
     }

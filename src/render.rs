@@ -1,28 +1,20 @@
 use crate::shader::Shader;
 use crate::time::Time;
 use gl;
-use gl::types::*;
-use glutin::{GlContext, GlWindow};
+use gl::types::{GLfloat, GLsizeiptr, GLsizei};
+use glutin::GlWindow;
 use std::mem;
 use std::os::raw::c_void;
 use std::ptr;
 
-pub struct Render {
+pub struct Render<'a> {
     shader: Shader,
-    gl_window: GlWindow,
+    gl_window: &'a GlWindow,
     vao: u32,
 }
 
-impl Render {
-    pub fn new(gl_window: GlWindow) -> Self {
-        unsafe {
-            gl::load_with(|symbol| {
-                gl_window.get_proc_address(symbol) as *const _
-            });
-
-            gl::ClearColor(0.0, 0.0, 0.0, 1.0);
-        }
-
+impl<'a> Render<'a> {
+    pub fn new(gl_window: &'a GlWindow) -> Self {
         let vertices: [f32; 20] = [
             0.5, 0.5, 0., 1., 1., 0.5, -0.5, 0., 1., 0., -0.5, -0.5, 0., 0.,
             0., -0.5, 0.5, 0., 0., 1.,
@@ -72,7 +64,7 @@ impl Render {
                 gl::FLOAT,
                 gl::FALSE,
                 5 * mem::size_of::<GLfloat>() as GLsizei,
-                (6 * mem::size_of::<GLfloat>()) as *const c_void,
+                (3 * mem::size_of::<GLfloat>()) as *const c_void,
             );
             gl::EnableVertexAttribArray(1);
         }
@@ -84,17 +76,18 @@ impl Render {
         }
     }
 
-    pub fn draw(&self, time: &Time) {
+    pub fn draw(&self, _time: &Time, tex_id: u32) {
         unsafe {
             // Clear color buffer with the color specified by gl::ClearColor.
             gl::Clear(gl::COLOR_BUFFER_BIT);
 
             gl::UseProgram(self.shader.id);
 
-            let green_value = time.now_to_secs().sin() / 2. + 0.5;
-
-            self.shader
-                .set_uniform4f("ourColor", &(0., green_value as f32, 0., 1.));
+            gl::BindTexture(gl::TEXTURE_2D, tex_id);
+            //
+            // let green_value = time.now_to_secs().sin() / 2. + 0.5;
+            // self.shader
+            //     .set_uniform4f("ourColor", &(0., green_value as f32, 0., 1.));
 
             gl::BindVertexArray(self.vao);
             gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, ptr::null());

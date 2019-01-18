@@ -46,6 +46,7 @@ impl Shader {
         self.set_matrix4("mvp", mvp.as_slice());
     }
 
+    #[allow(unused)]
     pub fn set_uniform4f(&self, var_name: &str, values: &(f32, f32, f32, f32)) {
         let shader_variable = self.get_location(var_name);
         let (a, b, c, d) = *values;
@@ -122,7 +123,7 @@ impl Shader {
                 ptr::null_mut(),
                 info_log.as_mut_ptr() as *mut GLchar,
             );
-            println!(
+            eprintln!(
                 "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n{}",
                 str::from_utf8(&info_log).unwrap()
             );

@@ -1,36 +1,31 @@
 mod game_controller;
 mod game_loop;
+mod opengl;
 mod render;
 mod shader;
 mod texture;
 mod time;
+mod window;
 
 use crate::{
     game_controller::{GameController, Input},
     game_loop::GameLoop,
     render::Render,
+    texture::Texture,
+    window::Window,
 };
-use gl;
-use glutin::{ContextBuilder, EventsLoop, GlContext, GlWindow, WindowBuilder};
 
 const GAME_TITLE: &str = "Neo Pac-Man";
 
 fn main() {
-    let window = WindowBuilder::new().with_title(GAME_TITLE);
-    let context = ContextBuilder::new();
-    let event_loop = EventsLoop::new();
-    let gl_window = GlWindow::new(window, context, &event_loop)
-        .expect("Error creating opengl window");
+    let window = Window::new(GAME_TITLE);
+    let render = Render::new(&window.gl_window);
 
-    unsafe {
-        gl_window
-            .make_current()
-            .expect("Error setting the current context")
-    }
-
-    let render = Render::new(gl_window);
-    let mut game_controller = GameController::new(event_loop);
+    let mut game_controller = GameController::new(window.event_loop);
     let mut game_loop = GameLoop::new();
+
+    let mut t = Texture::new("assets/textures/wall.jpg");
+    t.generate_texture();
 
     game_loop.start(|time| {
         // Process inputs.
@@ -42,7 +37,7 @@ fn main() {
         }
 
         // Render frame.
-        render.draw(&time);
+        render.draw(&time, t.texture_id);
 
         running
     });
