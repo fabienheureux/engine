@@ -25,7 +25,7 @@ fn main() {
     unsafe {
         gl_window
             .make_current()
-            .expect("Error setting current context")
+            .expect("Error setting the current context")
     }
 
     let render = Render::new(gl_window);

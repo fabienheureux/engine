@@ -73,12 +73,6 @@ impl<'a> Texture<'a> {
     /// Load the image into the memory.
     fn load(path: &str) -> image::DynamicImage {
         let path = Path::new(path);
-        let image_buffer = image::open(path);
-
-        if image_buffer.is_err() {
-            unimplemented!();
-        }
-
-        image_buffer.unwrap()
+        image::open(path).expect("Failed to load image")
     }
 }

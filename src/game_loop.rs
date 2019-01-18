@@ -47,7 +47,7 @@ impl GameLoop {
         if let Some(sleep_time) = sleep_time {
             std::thread::sleep(sleep_time);
         } else {
-            unimplemented!();
+            // unimplemented!();
         }
     }
 

@@ -20,23 +20,23 @@ impl Render {
                 gl_window.get_proc_address(symbol) as *const _
             });
 
-            gl::Enable(gl::CULL_FACE);
-            gl::Enable(gl::BLEND);
             gl::ClearColor(0.0, 0.0, 0.0, 1.0);
         }
 
-        let vertices: [f32; 9] = [
-            -0.5, -0.5, 0.0, // left
-            0.5, -0.5, 0.0, // right
-            0.0, 0.5, 0.0, // top
+        let vertices: [f32; 20] = [
+            0.5, 0.5, 0., 1., 1., 0.5, -0.5, 0., 1., 0., -0.5, -0.5, 0., 0.,
+            0., -0.5, 0.5, 0., 0., 1.,
         ];
 
+        let indices: [i32; 6] = [0, 1, 3, 1, 2, 3];
+
         let current_shader = Shader::new("assets/shaders", "default_cube");
-        let (mut vao, mut vbo) = (0, 0);
+        let (mut vao, mut vbo, mut ebo) = (0, 0, 0);
 
         unsafe {
             gl::GenVertexArrays(1, &mut vao);
             gl::GenBuffers(1, &mut vbo);
+            gl::GenBuffers(1, &mut ebo);
 
             gl::BindVertexArray(vao);
 
@@ -48,18 +48,33 @@ impl Render {
                 gl::STATIC_DRAW,
             );
 
+            gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, ebo);
+            gl::BufferData(
+                gl::ELEMENT_ARRAY_BUFFER,
+                (indices.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
+                &indices[0] as *const i32 as *const c_void,
+                gl::STATIC_DRAW,
+            );
+
             gl::VertexAttribPointer(
                 0,
                 3,
                 gl::FLOAT,
                 gl::FALSE,
-                3 * mem::size_of::<GLfloat>() as GLsizei,
+                5 * mem::size_of::<GLfloat>() as GLsizei,
                 ptr::null(),
             );
             gl::EnableVertexAttribArray(0);
 
-            gl::BindBuffer(gl::ARRAY_BUFFER, 0);
-            gl::BindVertexArray(0);
+            gl::VertexAttribPointer(
+                1,
+                2,
+                gl::FLOAT,
+                gl::FALSE,
+                5 * mem::size_of::<GLfloat>() as GLsizei,
+                (6 * mem::size_of::<GLfloat>()) as *const c_void,
+            );
+            gl::EnableVertexAttribArray(1);
         }
 
         Self {
@@ -82,7 +97,7 @@ impl Render {
                 .set_uniform4f("ourColor", &(0., green_value as f32, 0., 1.));
 
             gl::BindVertexArray(self.vao);
-            gl::DrawArrays(gl::TRIANGLES, 0, 3);
+            gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, ptr::null());
         }
 
         self.gl_window
