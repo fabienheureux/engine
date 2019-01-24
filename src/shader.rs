@@ -7,6 +7,7 @@ use std::path::PathBuf;
 use std::ptr;
 use std::str;
 
+#[derive(Debug)]
 pub struct Shader {
     pub id: u32,
     path: String,

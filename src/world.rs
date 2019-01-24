@@ -6,7 +6,7 @@ use gl;
 use nalgebra_glm as glm;
 use std::ptr;
 
-type Entity = (u32, u32, Shader, glm::TVec3<f32>);
+pub type Entity = (u32, u32, Shader, glm::TVec3<f32>);
 
 pub struct World {
     pub entities: Vec<(u32, u32, Shader, glm::TVec3<f32>)>,
@@ -33,6 +33,7 @@ impl World {
         }
     }
 
+    #[allow(unused)]
     pub fn with_entity(mut self, entity: Entity) -> Self {
         self.entities.push(entity);
         self
