@@ -1,4 +1,5 @@
-mod game_controller;
+mod camera;
+mod constants;
 mod game_loop;
 mod opengl;
 mod render;
@@ -8,37 +9,34 @@ mod time;
 mod window;
 
 use crate::{
-    game_controller::{GameController, Input},
-    game_loop::GameLoop,
-    render::Render,
-    texture::Texture,
+    camera::Camera, game_loop::GameLoop, render::Render, texture::Texture,
     window::Window,
 };
 
-const GAME_TITLE: &str = "Neo Pac-Man";
-
 fn main() {
-    let window = Window::new(GAME_TITLE);
-    let render = Render::new(&window.gl_window);
+    let mut window = Window::new();
+    let render = Render::new();
 
-    let mut game_controller = GameController::new(window.event_loop);
     let mut game_loop = GameLoop::new();
 
-    let mut t = Texture::new("assets/textures/wall.jpg");
+    let mut camera = Camera::new();
+
+    let mut t = Texture::new("./assets/textures/wall.jpg");
     t.generate_texture();
 
     game_loop.start(|time| {
-        // Process inputs.
-        let mut running = true;
-        let input = game_controller.pull();
+        window.capture();
+        let running = !window.should_close;
+        let mouse_event = window.get_mouse_events();
 
-        if input.is_some() {
-            running = input.unwrap() != Input::CloseRequested;
+        if mouse_event.has_moved {
+            camera.update(&mouse_event, &time);
         }
 
         // Render frame.
-        render.draw(&time, t.texture_id);
+        render.draw(&time, t.texture_id, &window, &mut camera);
+        window.clean();
 
-        running
+        return running;
     });
 }

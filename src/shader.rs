@@ -1,6 +1,5 @@
 use gl;
 use gl::types::*;
-use nalgebra_glm as glm;
 use std::ffi::CString;
 use std::fs::File;
 use std::io::Read;
@@ -47,11 +46,6 @@ impl Shader {
         unsafe { gl::Uniform1i(shader_variable, value) }
     }
 
-    #[allow(dead_code)]
-    pub fn set_mvp(&self, mvp: glm::Mat4) {
-        self.set_matrix4("mvp", mvp.as_slice());
-    }
-
     #[allow(unused)]
     pub fn set_uniform4f(&self, var_name: &str, values: &(f32, f32, f32, f32)) {
         let shader_variable = self.get_location(var_name);
@@ -81,7 +75,7 @@ impl Shader {
     }
 
     fn compile_shader(&self, shader_type: GLenum, file_path: &str) -> u32 {
-        let mut base = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        let mut base = PathBuf::from("./assets/");
 
         // TODO Need proper path here
         base.push(&self.path);
