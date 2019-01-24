@@ -34,6 +34,7 @@ impl Camera {
         }
     }
 
+    // Update the camera spin and position from freshly new events.
     pub fn update(&mut self, window: &Window, time: &Time) {
         if window.get_mouse_events().has_moved {
             self.update_spin(window, time);
@@ -72,7 +73,6 @@ impl Camera {
         });
     }
 
-    // Update the camera spin and position from freshly new events.
     // We are using the delta time for smoother spin.
     pub fn update_spin(&mut self, window: &Window, time: &Time) {
         let mouse_event = window.get_mouse_events();

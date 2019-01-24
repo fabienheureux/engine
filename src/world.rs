@@ -19,7 +19,10 @@ impl World {
     pub fn new() -> Self {
         Self {
             entities: vec![],
-            model: glm::rotate_x(&glm::Mat4::identity(), -55_f32.to_radians()),
+            model: glm::rotate_x(
+                &glm::Mat4::identity(),
+                -(55_f32.to_radians()),
+            ),
             view: glm::Mat4::identity(),
             projection: glm::perspective(
                 45_f32.to_radians(),

@@ -31,6 +31,6 @@ fn main() {
 
         // Render frame.
         world.draw(&window, &mut camera);
-        return running;
+        running
     });
 }

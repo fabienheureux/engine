@@ -16,8 +16,10 @@ pub struct Window {
 
 impl Window {
     pub fn new() -> Self {
-        let dimensions =
-            dpi::LogicalSize::new(SCREEN_WIDTH as f64, SCREEN_HEIGHT as f64);
+        let dimensions = dpi::LogicalSize::new(
+            f64::from(SCREEN_WIDTH),
+            f64::from(SCREEN_HEIGHT),
+        );
 
         let window = WindowBuilder::new()
             .with_title(GAME_TITLE)
@@ -88,13 +90,12 @@ impl Window {
                     }
                     _ => (),
                 },
-                Event::DeviceEvent { event, .. } => match event {
-                    DeviceEvent::MouseMotion { delta } => {
+                Event::DeviceEvent { event, .. } => {
+                    if let DeviceEvent::MouseMotion { delta } = event {
                         mouse_events.delta = *delta;
                         mouse_events.has_moved = true;
                     }
-                    _ => (),
-                },
+                }
                 _ => (),
             });
 

@@ -21,6 +21,6 @@ impl Time {
 
     pub fn duration_to_secs(duration: Duration) -> f64 {
         duration.as_secs() as f64
-            + duration.subsec_nanos() as f64 / 1_000_000_000 as f64
+            + f64::from(duration.subsec_nanos()) / f64::from(1_000_000_000)
     }
 }
