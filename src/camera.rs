@@ -1,5 +1,6 @@
 use crate::time::Time;
-use crate::window::MouseEvents;
+use crate::window::Window;
+use glutin::VirtualKeyCode;
 use nalgebra_glm as glm;
 
 pub struct Camera {
@@ -33,9 +34,49 @@ impl Camera {
         }
     }
 
-    // Update the camera spin from freshly new mouse events.
+    pub fn update(&mut self, window: &Window, time: &Time) {
+        if window.get_mouse_events().has_moved {
+            self.update_spin(window, time);
+        }
+
+        self.update_pos(window, time);
+    }
+
+    pub fn update_pos(&mut self, window: &Window, time: &Time) {
+        let speed = (self.speed * time.dt) as f32;
+
+        window.trigger_on_press(VirtualKeyCode::W, || {
+            self.position += speed * self.front;
+        });
+
+        window.trigger_on_press(VirtualKeyCode::S, || {
+            self.position -= speed * self.front;
+        });
+
+        window.trigger_on_press(VirtualKeyCode::D, || {
+            self.position +=
+                glm::normalize(&self.front.cross(&self.up)) * speed;
+        });
+
+        window.trigger_on_press(VirtualKeyCode::A, || {
+            self.position -=
+                glm::normalize(&self.front.cross(&self.up)) * speed;
+        });
+
+        window.trigger_on_press(VirtualKeyCode::Q, || {
+            self.position -= speed * self.up;
+        });
+
+        window.trigger_on_press(VirtualKeyCode::E, || {
+            self.position += speed * self.up;
+        });
+    }
+
+    // Update the camera spin and position from freshly new events.
     // We are using the delta time for smoother spin.
-    pub fn update(&mut self, mouse_event: &MouseEvents, time: &Time) {
+    pub fn update_spin(&mut self, window: &Window, time: &Time) {
+        let mouse_event = window.get_mouse_events();
+
         let (delta_x, delta_y) = mouse_event.delta;
         self.pos.0 += delta_x;
         self.pos.1 += delta_y;

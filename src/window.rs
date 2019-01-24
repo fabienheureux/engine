@@ -28,14 +28,14 @@ impl Window {
         let gl_window = GlWindow::new(window, context, &event_loop)
             .expect("Error creating opengl window");
 
-        OpenGL::initialize(&gl_window);
-
         gl_window
             .window()
             .grab_cursor(true)
             .expect("Error when grabbing the cursor");
 
         gl_window.window().hide_cursor(true);
+
+        OpenGL::initialize(&gl_window);
 
         Self {
             should_close: false,
@@ -118,12 +118,6 @@ impl Window {
 
     pub fn get_mouse_events(&self) -> &MouseEvents {
         &self.mouse_events
-    }
-
-    pub fn clean(&self) {
-        self.gl_window
-            .swap_buffers()
-            .expect("Problem with gl buffer swap");
     }
 }
 
