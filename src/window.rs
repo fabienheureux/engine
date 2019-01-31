@@ -63,9 +63,7 @@ impl Window {
                         if let Some(keycode) = input.virtual_keycode {
                             if input.state == ElementState::Pressed {
                                 key_events.add_keycode(keycode);
-                            }
-
-                            if input.state == ElementState::Released {
+                            } else {
                                 key_events.remove_keycode(keycode);
                             }
 
@@ -107,7 +105,7 @@ impl Window {
     }
 }
 
-/// Store all key events. 
+/// Store all key events.
 /// We use a vector to store multiple key press at the same time.
 pub struct KeyEvents {
     pub keycodes: Vec<VirtualKeyCode>,

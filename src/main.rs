@@ -24,10 +24,10 @@ fn main() -> Result<(), notify::Error> {
     let mut world = World::new();
     world.entities = helpers::load_entities();
 
-    // Watch the ressources folder.
+    // Watch the ressources folder every 2 secs.
     let (sender, receiver) = channel();
     let mut watcher: RecommendedWatcher =
-        Watcher::new(sender.clone(), Duration::from_secs(2))?;
+        Watcher::new(sender, Duration::from_secs(2))?;
     watcher.watch("assets/ressources/", RecursiveMode::NonRecursive)?;
 
     game_loop.start(|time| {
@@ -35,7 +35,7 @@ fn main() -> Result<(), notify::Error> {
 
         let running = !window.should_close;
 
-        if let Ok(_) = receiver.try_recv() {
+        if receiver.try_recv().is_ok() {
             world.entities = helpers::load_entities();
         }
 
