@@ -32,6 +32,7 @@ fn main() -> Result<(), notify::Error> {
 
     game_loop.start(|time| {
         window.capture();
+
         let running = !window.should_close;
 
         if let Ok(_) = receiver.try_recv() {

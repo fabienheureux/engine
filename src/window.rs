@@ -50,7 +50,7 @@ impl Window {
 
     pub fn capture(&mut self) {
         let mut should_close = false;
-        let mut key_events = KeyEvents::default();
+        let key_events = &mut self.key_events;
         let mut mouse_events = MouseEvents::default();
 
         self.event_loop
@@ -60,33 +60,22 @@ impl Window {
                         should_close = true;
                     }
                     WindowEvent::KeyboardInput { input, .. } => {
-                        if input.virtual_keycode.unwrap()
-                            == VirtualKeyCode::Escape
-                        {
-                            should_close = true;
-                        }
+                        if let Some(keycode) = input.virtual_keycode {
+                            if input.state == ElementState::Pressed {
+                                key_events.add_keycode(keycode);
+                            }
 
-                        key_events.keycode = input.virtual_keycode;
-                        key_events.state = input.state;
-                        key_events.modifiers = input.modifiers;
+                            if input.state == ElementState::Released {
+                                key_events.remove_keycode(keycode);
+                            }
+
+                            key_events.set_modifiers(input.modifiers);
+                            should_close = keycode == VirtualKeyCode::Escape;
+                        }
                     }
                     WindowEvent::MouseInput { button, state, .. } => {
                         mouse_events.button = Some(*button);
                         mouse_events.state = *state;
-                    }
-                    WindowEvent::CursorMoved {
-                        position,
-                        modifiers,
-                        ..
-                    } => {
-                        mouse_events.cursor_pos = *position;
-                        mouse_events.modifiers = *modifiers;
-                    }
-                    WindowEvent::CursorEntered { .. } => {
-                        mouse_events.cursor_in_window = true;
-                    }
-                    WindowEvent::CursorLeft { .. } => {
-                        mouse_events.cursor_in_window = false;
                     }
                     _ => (),
                 },
@@ -100,7 +89,6 @@ impl Window {
             });
 
         self.should_close = should_close;
-        self.key_events = key_events;
         self.mouse_events = mouse_events;
     }
 
@@ -109,10 +97,7 @@ impl Window {
         keycode: VirtualKeyCode,
         mut callback: impl FnMut(),
     ) {
-        let is_pressed = self.key_events.state == ElementState::Pressed;
-        let is_keycode = self.key_events.keycode == Some(keycode);
-
-        if is_keycode && is_pressed {
+        if self.key_events.keycodes.contains(&keycode) {
             callback();
         }
     }
@@ -122,18 +107,38 @@ impl Window {
     }
 }
 
-#[derive(Clone)]
+/// Store all key events. 
+/// We use a vector to store multiple key press at the same time.
 pub struct KeyEvents {
-    pub keycode: Option<VirtualKeyCode>,
+    pub keycodes: Vec<VirtualKeyCode>,
     pub modifiers: ModifiersState,
-    pub state: ElementState,
+}
+
+impl KeyEvents {
+    /// Update modifers like alt/ctrl...
+    pub fn set_modifiers(&mut self, modifiers: ModifiersState) {
+        self.modifiers = modifiers;
+    }
+
+    /// Add keycode into the vectors only if not already there.
+    pub fn add_keycode(&mut self, keycode: VirtualKeyCode) {
+        if !self.keycodes.contains(&keycode) {
+            self.keycodes.push(keycode);
+        }
+    }
+    /// Remove keycode from the vectors.
+    /// TODO: We should use `remove_item` method when available in stable toolchain.
+    pub fn remove_keycode(&mut self, keycode: VirtualKeyCode) {
+        if let Some(index) = self.keycodes.iter().position(|x| *x == keycode) {
+            self.keycodes.remove(index);
+        }
+    }
 }
 
 impl Default for KeyEvents {
     fn default() -> Self {
         Self {
-            state: ElementState::Released,
-            keycode: None,
+            keycodes: vec![],
             modifiers: ModifiersState::default(),
         }
     }
@@ -147,10 +152,8 @@ pub struct MouseEvents {
     // This is the cursor position in the window.
     // We should only use this to track the cursor for UI stuff.
     pub cursor_pos: dpi::LogicalPosition,
-    pub modifiers: ModifiersState,
     pub state: ElementState,
     pub button: Option<MouseButton>,
-    pub cursor_in_window: bool,
     pub has_moved: bool,
 }
 
@@ -159,10 +162,8 @@ impl Default for MouseEvents {
         Self {
             delta: (0., 0.),
             cursor_pos: dpi::LogicalPosition::new(0., 0.),
-            modifiers: ModifiersState::default(),
             state: ElementState::Released,
             button: None,
-            cursor_in_window: false,
             has_moved: false,
         }
     }

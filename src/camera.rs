@@ -40,7 +40,7 @@ impl Camera {
             self.update_spin(window, time);
         }
 
-        self.update_pos(window, time);
+        self.update_pos(&window, time);
     }
 
     pub fn update_pos(&mut self, window: &Window, time: &Time) {

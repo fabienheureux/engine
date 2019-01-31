@@ -1,4 +1,3 @@
-use crate::shader::Shader;
 use crate::texture::Texture;
 use gl;
 use gl::types::{GLfloat, GLsizei, GLsizeiptr};
@@ -41,16 +40,13 @@ impl OpenGL {
 
     // Create a little plane.
     // Return vao and shader.
-    pub fn gen_plane(
-        pos: glm::TVec3<f32>,
-    ) -> (u32, u32, Shader, glm::TVec3<f32>) {
+    pub fn gen_plane(pos: glm::TVec3<f32>) -> (u32, u32, glm::TVec3<f32>) {
         let vertices: [f32; 20] = [
             0.5, 0.5, 0., 1., 1., 0.5, -0.5, 0., 1., 0., -0.5, -0.5, 0., 0.,
             0., -0.5, 0.5, 0., 0., 1.,
         ];
         let indices: [i32; 6] = [0, 1, 3, 1, 2, 3];
 
-        let current_shader = Shader::new("shaders", "default_cube");
         let vao = OpenGL::gen_vao();
         let vbo = OpenGL::gen_buffer();
         let ebo = OpenGL::gen_buffer();
@@ -98,6 +94,6 @@ impl OpenGL {
             gl::EnableVertexAttribArray(1);
         }
 
-        (vao, t.texture_id, current_shader, pos)
+        (vao, t.texture_id, pos)
     }
 }
