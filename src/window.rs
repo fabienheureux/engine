@@ -106,14 +106,14 @@ impl Window {
 }
 
 /// Store all key events.
-/// We use a vector to store multiple key press at the same time.
+/// We use a vector for storing multiple key press at the same time.
 pub struct KeyEvents {
     pub keycodes: Vec<VirtualKeyCode>,
     pub modifiers: ModifiersState,
 }
 
 impl KeyEvents {
-    /// Update modifers like alt/ctrl...
+    /// Update modifers (e.g: alt, ctrl).
     pub fn set_modifiers(&mut self, modifiers: ModifiersState) {
         self.modifiers = modifiers;
     }
@@ -142,7 +142,6 @@ impl Default for KeyEvents {
     }
 }
 
-#[derive(Clone)]
 pub struct MouseEvents {
     // This is the delta of the mouse. We should use this
     // for camera stuff.
