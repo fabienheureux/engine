@@ -14,7 +14,7 @@ pub struct Plane {
 
 impl Plane {
     pub fn new(position: Pos) -> Self {
-        let shader = Shader::new("shaders", "default_cube");
+        let shader = Shader::new("default_cube");
         let (vao, texture_id, position) = OpenGL::gen_plane(position);
 
         Self {
@@ -56,7 +56,7 @@ pub struct Cube {
 
 impl Cube {
     pub fn new(position: Pos) -> Self {
-        let shader = Shader::new("shaders", "default_cube");
+        let shader = Shader::new("default_cube");
         let (vao, texture_id, position) = OpenGL::gen_cube(position);
 
         Self {

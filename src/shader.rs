@@ -7,25 +7,28 @@ use std::path::PathBuf;
 use std::ptr;
 use std::str;
 
+use crate::constants::SHADER_PATH;
+
 #[derive(Debug)]
 pub struct Shader {
     pub id: u32,
-    path: String,
+    shader_name: String,
 }
 
 impl Shader {
-    pub fn new(shader_path: &str, shader_name: &str) -> Shader {
+    pub fn new(shader_name: &str) -> Shader {
         let mut shader = Shader {
             id: 0,
-            path: String::from(shader_path),
+            shader_name: String::from(shader_name),
         };
 
-        let (vertex_path, fragment_path) = shader.get_file_name(shader_name);
-
-        let vertex_shader =
-            shader.compile_shader(gl::VERTEX_SHADER, &vertex_path);
-        let fragment_shader =
-            shader.compile_shader(gl::FRAGMENT_SHADER, &fragment_path);
+        let shader_files = shader.get_file_name(shader_name);
+        let (vertex_shader, fragment_shader) = {
+            (
+                shader.compile_shader(gl::VERTEX_SHADER, &shader_files.0),
+                shader.compile_shader(gl::FRAGMENT_SHADER, &shader_files.1),
+            )
+        };
 
         unsafe {
             let shader_program_id = gl::CreateProgram();
@@ -76,10 +79,8 @@ impl Shader {
     }
 
     fn compile_shader(&self, shader_type: GLenum, file_path: &str) -> u32 {
-        let mut base = PathBuf::from("./assets/");
+        let mut base = PathBuf::from(SHADER_PATH);
 
-        // TODO Need proper path here
-        base.push(&self.path);
         base.push(file_path);
         let mut shader_file = File::open(base).unwrap();
         let mut shader_string = String::new();

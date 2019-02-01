@@ -11,7 +11,8 @@ mod window;
 mod world;
 
 use crate::{
-    camera::Camera, game_loop::GameLoop, window::Window, world::World,
+    camera::Camera, constants::RESSOURCE_PATH, game_loop::GameLoop,
+    window::Window, world::World,
 };
 use notify::{RecommendedWatcher, RecursiveMode, Watcher};
 use std::sync::mpsc::channel;
@@ -29,7 +30,7 @@ fn main() -> Result<(), notify::Error> {
     let (sender, receiver) = channel();
     let mut watcher: RecommendedWatcher =
         Watcher::new(sender, Duration::from_secs(2))?;
-    watcher.watch("assets/ressources/", RecursiveMode::NonRecursive)?;
+    watcher.watch(RESSOURCE_PATH, RecursiveMode::NonRecursive)?;
 
     game_loop.start(|time| {
         window.capture();

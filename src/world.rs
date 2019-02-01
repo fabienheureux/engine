@@ -22,7 +22,7 @@ pub struct World {
 
 impl World {
     pub fn new() -> Self {
-        let shader = Shader::new("shaders", "default_cube");
+        let shader = Shader::new("default_cube");
 
         Self {
             entities: vec![],
