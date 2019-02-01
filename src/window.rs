@@ -30,13 +30,6 @@ impl Window {
         let gl_window = GlWindow::new(window, context, &event_loop)
             .expect("Error creating opengl window");
 
-        gl_window
-            .window()
-            .grab_cursor(true)
-            .expect("Error when grabbing the cursor");
-
-        gl_window.window().hide_cursor(true);
-
         OpenGL::initialize(&gl_window);
 
         Self {
@@ -48,10 +41,21 @@ impl Window {
         }
     }
 
+    /// Hide and Grab the cursor.
+    pub fn hide_cursor(&self, is_hide: bool) {
+        self.gl_window
+            .window()
+            .grab_cursor(is_hide)
+            .expect("Error when grabbing the cursor");
+
+        self.gl_window.window().hide_cursor(is_hide);
+    }
+
     pub fn capture(&mut self) {
         let mut should_close = false;
         let key_events = &mut self.key_events;
-        let mut mouse_events = MouseEvents::default();
+        let mouse_events = &mut self.mouse_events;
+        mouse_events.has_moved = false;
 
         self.event_loop
             .poll_events(|glutin_event| match &glutin_event {
@@ -73,7 +77,8 @@ impl Window {
                     }
                     WindowEvent::MouseInput { button, state, .. } => {
                         mouse_events.button = Some(*button);
-                        mouse_events.state = *state;
+                        mouse_events.is_pressed =
+                            *state == ElementState::Pressed;
                     }
                     _ => (),
                 },
@@ -87,21 +92,14 @@ impl Window {
             });
 
         self.should_close = should_close;
-        self.mouse_events = mouse_events;
-    }
-
-    pub fn trigger_on_press(
-        &self,
-        keycode: VirtualKeyCode,
-        mut callback: impl FnMut(),
-    ) {
-        if self.key_events.keycodes.contains(&keycode) {
-            callback();
-        }
     }
 
     pub fn get_mouse_events(&self) -> &MouseEvents {
         &self.mouse_events
+    }
+
+    pub fn get_keyboard_events(&self) -> &KeyEvents {
+        &self.key_events
     }
 }
 
@@ -113,6 +111,17 @@ pub struct KeyEvents {
 }
 
 impl KeyEvents {
+    /// Will call the closure only if the given keycode is pressed.
+    pub fn trigger_on_press(
+        &self,
+        keycode: VirtualKeyCode,
+        mut callback: impl FnMut(),
+    ) {
+        if self.keycodes.contains(&keycode) {
+            callback();
+        }
+    }
+
     /// Update modifers (e.g: alt, ctrl).
     pub fn set_modifiers(&mut self, modifiers: ModifiersState) {
         self.modifiers = modifiers;
@@ -149,9 +158,37 @@ pub struct MouseEvents {
     // This is the cursor position in the window.
     // We should only use this to track the cursor for UI stuff.
     pub cursor_pos: dpi::LogicalPosition,
-    pub state: ElementState,
+    pub is_pressed: bool,
     pub button: Option<MouseButton>,
     pub has_moved: bool,
+}
+
+impl MouseEvents {
+    /// Will call the closure only if the given mouse button is pressed.
+    pub fn trigger_on_press(
+        &self,
+        button: MouseButton,
+        mut callback: impl FnMut(),
+    ) {
+        if let Some(pressed_button) = self.button {
+            if pressed_button == button && self.is_pressed {
+                callback();
+            }
+        }
+    }
+
+    /// Will call the closure only if the given mouse button is released.
+    pub fn trigger_on_release(
+        &self,
+        button: MouseButton,
+        mut callback: impl FnMut(),
+    ) {
+        if let Some(pressed_button) = self.button {
+            if pressed_button == button && !self.is_pressed {
+                callback();
+            }
+        }
+    }
 }
 
 impl Default for MouseEvents {
@@ -159,7 +196,7 @@ impl Default for MouseEvents {
         Self {
             delta: (0., 0.),
             cursor_pos: dpi::LogicalPosition::new(0., 0.),
-            state: ElementState::Released,
+            is_pressed: false,
             button: None,
             has_moved: false,
         }

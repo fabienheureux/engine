@@ -1,6 +1,6 @@
 use crate::time::Time;
-use crate::window::Window;
-use glutin::VirtualKeyCode;
+use crate::window::{KeyEvents, Window};
+use glutin::{MouseButton, VirtualKeyCode};
 use nalgebra_glm as glm;
 
 pub struct Camera {
@@ -36,39 +36,50 @@ impl Camera {
 
     // Update the camera spin and position from freshly new events.
     pub fn update(&mut self, window: &Window, time: &Time) {
-        if window.get_mouse_events().has_moved {
-            self.update_spin(window, time);
-        }
+        let mouse = window.get_mouse_events();
 
-        self.update_pos(&window, time);
+        // We want to hide the cursor when we move our camera.
+        mouse.trigger_on_press(MouseButton::Right, || {
+            window.hide_cursor(true);
+
+            if mouse.has_moved {
+                self.update_spin(window, time);
+            }
+        });
+
+        mouse.trigger_on_release(MouseButton::Right, || {
+            window.hide_cursor(false);
+        });
+
+        self.update_pos(&window.get_keyboard_events(), time);
     }
 
-    pub fn update_pos(&mut self, window: &Window, time: &Time) {
+    pub fn update_pos(&mut self, keyboard: &KeyEvents, time: &Time) {
         let speed = (self.speed * time.dt) as f32;
 
-        window.trigger_on_press(VirtualKeyCode::W, || {
+        keyboard.trigger_on_press(VirtualKeyCode::W, || {
             self.position += speed * self.front;
         });
 
-        window.trigger_on_press(VirtualKeyCode::S, || {
+        keyboard.trigger_on_press(VirtualKeyCode::S, || {
             self.position -= speed * self.front;
         });
 
-        window.trigger_on_press(VirtualKeyCode::D, || {
+        keyboard.trigger_on_press(VirtualKeyCode::D, || {
             self.position +=
                 glm::normalize(&self.front.cross(&self.up)) * speed;
         });
 
-        window.trigger_on_press(VirtualKeyCode::A, || {
+        keyboard.trigger_on_press(VirtualKeyCode::A, || {
             self.position -=
                 glm::normalize(&self.front.cross(&self.up)) * speed;
         });
 
-        window.trigger_on_press(VirtualKeyCode::Q, || {
+        keyboard.trigger_on_press(VirtualKeyCode::Q, || {
             self.position -= speed * self.up;
         });
 
-        window.trigger_on_press(VirtualKeyCode::E, || {
+        keyboard.trigger_on_press(VirtualKeyCode::E, || {
             self.position += speed * self.up;
         });
     }
