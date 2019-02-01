@@ -3,6 +3,7 @@ mod constants;
 mod game_loop;
 mod helpers;
 mod opengl;
+mod primitives;
 mod shader;
 mod texture;
 mod time;

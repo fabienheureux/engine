@@ -4,12 +4,16 @@ use crate::shader::Shader;
 use crate::window::Window;
 use gl;
 use nalgebra_glm as glm;
-use std::ptr;
 
-pub type Entity = (u32, u32, glm::TVec3<f32>);
+pub type Entity = Box<dyn Renderer>;
 
+pub trait Renderer: std::fmt::Debug {
+    fn draw(&self, model: glm::Mat4);
+}
+
+#[derive(Debug)]
 pub struct World {
-    pub entities: Vec<(u32, u32, glm::TVec3<f32>)>,
+    pub entities: Vec<Entity>,
     model: glm::Mat4,
     view: glm::Mat4,
     projection: glm::Mat4,
@@ -51,7 +55,6 @@ impl World {
             gl::Enable(gl::DEPTH_TEST);
             // Clear color buffer with the color specified by gl::ClearColor.
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
-
             gl::UseProgram(self.shader.id);
         }
 
@@ -60,25 +63,7 @@ impl World {
             .set_matrix4("projection", glm::value_ptr(&self.projection));
 
         self.entities.as_slice().iter().for_each(|entity| {
-            let (vao, tex_id, pos) = entity;
-            let model = glm::translate(&self.model, pos);
-            self.shader.set_matrix4("model", glm::value_ptr(&model));
-            self.shader.set_int("ourTexture", *tex_id as i32);
-            self.shader.set_uniform4f("ourColor", &(0., 1., 0., 1.));
-
-            unsafe {
-                gl::ActiveTexture(gl::TEXTURE0);
-                gl::BindTexture(gl::TEXTURE_2D, *tex_id);
-
-                gl::BindVertexArray(*vao);
-
-                gl::DrawElements(
-                    gl::TRIANGLES,
-                    6,
-                    gl::UNSIGNED_INT,
-                    ptr::null(),
-                );
-            }
+            entity.draw(self.model);
         });
 
         // Cleanup
