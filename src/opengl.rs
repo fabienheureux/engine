@@ -24,6 +24,14 @@ impl OpenGL {
         }
     }
 
+    pub fn fill_mode() {
+        unsafe { gl::PolygonMode(gl::FRONT_AND_BACK, gl::FILL) }
+    }
+
+    pub fn line_mode() {
+        unsafe { gl::PolygonMode(gl::FRONT_AND_BACK, gl::LINE) }
+    }
+
     /// Generate Vertex Array Object.
     pub fn gen_vao() -> u32 {
         let mut vao = 0;

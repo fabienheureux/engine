@@ -9,11 +9,11 @@ use std::fs::File;
 
 #[derive(Debug, Deserialize)]
 struct Model {
-    items: Vec<Things>,
+    items: Vec<Elements>,
 }
 
 #[derive(Debug, Deserialize)]
-enum Things {
+enum Elements {
     Cube(f32, f32, f32),
     Plane(f32, f32, f32),
 }
@@ -27,10 +27,10 @@ pub fn load_entities() -> Vec<Entity> {
         de::from_reader(&file).expect("Crash when deserializing entities");
 
     model.items.iter().for_each(|item| match *item {
-        Things::Cube(x, y, z) => {
+        Elements::Cube(x, y, z) => {
             entities.push(Box::new(Cube::new(glm::vec3(x, y, z))))
         }
-        Things::Plane(x, y, z) => {
+        Elements::Plane(x, y, z) => {
             entities.push(Box::new(Plane::new(glm::vec3(x, y, z))))
         }
     });

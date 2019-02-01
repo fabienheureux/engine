@@ -1,8 +1,10 @@
 use crate::camera::Camera;
 use crate::constants::{SCREEN_HEIGHT, SCREEN_WIDTH};
+use crate::opengl::OpenGL;
 use crate::shader::Shader;
 use crate::window::Window;
 use gl;
+use glutin::VirtualKeyCode;
 use nalgebra_glm as glm;
 
 pub type Entity = Box<dyn Renderer>;
@@ -47,7 +49,26 @@ impl World {
         self
     }
 
+    pub fn set_polygon_mode(&self, window: &Window) {
+        let keyboard = window.get_keyboard_events();
+
+        // Only if ctrl is pressed.
+        if !keyboard.modifiers.ctrl {
+            return;
+        }
+
+        keyboard.trigger_on_press(VirtualKeyCode::L, || {
+            OpenGL::line_mode();
+        });
+
+        keyboard.trigger_on_press(VirtualKeyCode::F, || {
+            OpenGL::fill_mode();
+        });
+    }
+
     pub fn draw(&mut self, window: &Window, cam: &mut Camera) {
+        self.set_polygon_mode(window);
+
         self.view =
             glm::look_at(&cam.position, &(cam.position + cam.front), &cam.up);
 
