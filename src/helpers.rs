@@ -1,5 +1,5 @@
 use crate::{
-    primitives::{Cube, Plane},
+    primitives::{Cube, LightSource, Plane},
     world::Entity,
 };
 use nalgebra_glm as glm;
@@ -15,6 +15,7 @@ struct Model {
 #[derive(Debug, Deserialize)]
 enum Elements {
     Cube(f32, f32, f32),
+    LightSource(f32, f32, f32),
     Plane(f32, f32, f32),
 }
 
@@ -29,6 +30,9 @@ pub fn load_entities() -> Vec<Entity> {
     model.items.iter().for_each(|item| match *item {
         Elements::Cube(x, y, z) => {
             entities.push(Box::new(Cube::new(glm::vec3(x, y, z))))
+        }
+        Elements::LightSource(x, y, z) => {
+            entities.push(Box::new(LightSource::new(glm::vec3(x, y, z))))
         }
         Elements::Plane(x, y, z) => {
             entities.push(Box::new(Plane::new(glm::vec3(x, y, z))))

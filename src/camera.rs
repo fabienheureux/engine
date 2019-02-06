@@ -55,7 +55,11 @@ impl Camera {
     }
 
     pub fn update_pos(&mut self, keyboard: &KeyEvents, time: &Time) {
-        let speed = (self.speed * time.dt) as f32;
+        let mut speed = (self.speed * time.dt) as f32;
+
+        if keyboard.modifiers.shift {
+            speed *= 2.5;
+        }
 
         keyboard.trigger_on_press(VirtualKeyCode::W, || {
             self.position += speed * self.front;

@@ -1,6 +1,7 @@
 mod camera;
 mod constants;
 mod game_loop;
+mod renderer;
 mod helpers;
 mod opengl;
 mod primitives;
@@ -44,7 +45,7 @@ fn main() -> Result<(), notify::Error> {
         camera.update(&window, &time);
 
         // Render frame.
-        world.draw(&window, &mut camera);
+        world.draw(&window, &mut camera, &time);
         running
     });
 
