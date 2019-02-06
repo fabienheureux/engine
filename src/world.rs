@@ -1,7 +1,6 @@
 use crate::camera::Camera;
 use crate::constants::{SCREEN_HEIGHT, SCREEN_WIDTH};
 use crate::opengl::OpenGL;
-use crate::shader::Shader;
 use crate::window::Window;
 use gl;
 use glutin::VirtualKeyCode;
@@ -10,7 +9,7 @@ use nalgebra_glm as glm;
 pub type Entity = Box<dyn Renderer>;
 
 pub trait Renderer: std::fmt::Debug {
-    fn draw(&self, model: glm::Mat4);
+    fn draw(&self, model: glm::Mat4, view: glm::Mat4, proj: glm::Mat4);
 }
 
 #[derive(Debug)]
@@ -19,13 +18,10 @@ pub struct World {
     model: glm::Mat4,
     view: glm::Mat4,
     projection: glm::Mat4,
-    shader: Shader,
 }
 
 impl World {
     pub fn new() -> Self {
-        let shader = Shader::new("default_cube");
-
         Self {
             entities: vec![],
             model: glm::rotate_x(
@@ -39,7 +35,6 @@ impl World {
                 0.1,
                 100.,
             ),
-            shader,
         }
     }
 
@@ -76,15 +71,10 @@ impl World {
             gl::Enable(gl::DEPTH_TEST);
             // Clear color buffer with the color specified by gl::ClearColor.
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
-            gl::UseProgram(self.shader.id);
         }
 
-        self.shader.set_matrix4("view", glm::value_ptr(&self.view));
-        self.shader
-            .set_matrix4("projection", glm::value_ptr(&self.projection));
-
         self.entities.as_slice().iter().for_each(|entity| {
-            entity.draw(self.model);
+            entity.draw(self.model, self.view, self.projection);
         });
 
         // Cleanup

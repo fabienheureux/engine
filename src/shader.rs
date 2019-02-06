@@ -9,45 +9,58 @@ use std::str;
 
 use crate::constants::SHADER_PATH;
 
-#[derive(Debug)]
+#[derive(Default, Debug)]
 pub struct Shader {
     pub id: u32,
-    shader_name: String,
+    vert_name: String,
+    frag_name: String,
 }
 
 impl Shader {
-    pub fn new(shader_name: &str) -> Shader {
-        let mut shader = Shader {
-            id: 0,
-            shader_name: String::from(shader_name),
-        };
+    pub fn new() -> Self {
+        unsafe {
+            Self {
+                id: gl::CreateProgram(),
+                ..Self::default()
+            }
+        }
+    }
 
-        let shader_files = shader.get_file_name(shader_name);
-        let (vertex_shader, fragment_shader) = {
-            (
-                shader.compile_shader(gl::VERTEX_SHADER, &shader_files.0),
-                shader.compile_shader(gl::FRAGMENT_SHADER, &shader_files.1),
-            )
-        };
+    pub fn with_vert(self, shader_name: &str) -> Self {
+        let fragment = format!("{}.vert", shader_name);
+        let shader = self.compile_shader(gl::VERTEX_SHADER, &fragment);
 
         unsafe {
-            let shader_program_id = gl::CreateProgram();
-            gl::AttachShader(shader_program_id, vertex_shader);
-            gl::AttachShader(shader_program_id, fragment_shader);
-            gl::LinkProgram(shader_program_id);
-
-            gl::DeleteShader(vertex_shader);
-            gl::DeleteShader(fragment_shader);
-            shader.id = shader_program_id;
+            gl::AttachShader(self.id, shader);
+            gl::LinkProgram(self.id);
+            gl::DeleteShader(shader);
         }
 
-        shader
+        self
+    }
+
+    pub fn with_frag(self, shader_name: &str) -> Self {
+        let fragment = format!("{}.frag", shader_name);
+        let shader = self.compile_shader(gl::FRAGMENT_SHADER, &fragment);
+
+        unsafe {
+            gl::AttachShader(self.id, shader);
+            gl::LinkProgram(self.id);
+            gl::DeleteShader(shader);
+        }
+
+        self
     }
 
     #[allow(dead_code)]
     pub fn set_int(&self, var_name: &str, value: i32) {
         let shader_variable = self.get_location(var_name);
         unsafe { gl::Uniform1i(shader_variable, value) }
+    }
+
+    pub fn set_color(&self, var_name: &str, values: &(f32, f32, f32)) {
+        let shader_variable = self.get_location(var_name);
+        unsafe { gl::Uniform3f(shader_variable, values.0, values.1, values.2) }
     }
 
     #[allow(unused)]
@@ -130,12 +143,5 @@ impl Shader {
                 str::from_utf8(&info_log).unwrap()
             );
         }
-    }
-
-    fn get_file_name(&self, shader_name: &str) -> (String, String) {
-        let vertex = format!("{}.vert", shader_name);
-        let fragment = format!("{}.frag", shader_name);
-
-        (vertex, fragment)
     }
 }
