@@ -107,7 +107,7 @@ impl Renderer for Cube {
         let center: glm::TVec3<f32> = self.position;
         let r: f32 = 1.5;
         let mut position = glm::vec3(0., 0., 0.);
-        let now = time.now_to_secs();
+        let now = time.now_to_secs() * 4.;
         position.x = center.x + (r * now.cos() as f32);
         position.z = center.z + (r * now.sin() as f32);
 
@@ -177,7 +177,7 @@ impl Renderer for LightSource {
         let model = glm::Mat4::identity();
         let center: glm::TVec3<f32> = glm::vec3(0., 0., 0.);
         let rayon: f32 = 2.5;
-        let now = time.now_to_secs();
+        let now = time.now_to_secs() * 4.;
         self.position.x = center.x + (rayon * now.cos() as f32);
         self.position.z = center.z + (rayon * now.sin() as f32);
 
