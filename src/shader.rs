@@ -58,7 +58,12 @@ impl Shader {
         unsafe { gl::Uniform1i(shader_variable, value) }
     }
 
-    pub fn set_color(&self, var_name: &str, values: &(f32, f32, f32)) {
+    pub fn set_float(&self, var_name: &str, value: f32) {
+        let shader_variable = self.get_location(var_name);
+        unsafe { gl::Uniform1f(shader_variable, value) }
+    }
+
+    pub fn set_vec3(&self, var_name: &str, values: &(f32, f32, f32)) {
         let shader_variable = self.get_location(var_name);
         unsafe { gl::Uniform3f(shader_variable, values.0, values.1, values.2) }
     }
