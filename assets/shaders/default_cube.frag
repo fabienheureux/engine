@@ -30,7 +30,7 @@ uniform Camera {
   vec3 cam_pos;
 };
 
-#define MAX_LIGHTS_COUNT 2
+#define MAX_LIGHTS_COUNT 30
 uniform Lights {
   Light light[MAX_LIGHTS_COUNT];
 } lights;
