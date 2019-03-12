@@ -1,8 +1,8 @@
-use crate::texture::Texture;
 use gl;
 use gl::types::{GLfloat, GLsizei, GLsizeiptr};
 use glutin::{GlContext, GlWindow};
 use nalgebra_glm as glm;
+use std::ffi::CString;
 use std::os::raw::c_void;
 use std::{mem, ptr};
 
@@ -46,9 +46,118 @@ impl OpenGL {
         id
     }
 
+    pub fn create_camera_ubo(binding_point: u32) -> u32 {
+        let mat_4_size = mem::size_of::<glm::Mat4>();
+        let vec3_size = mem::size_of::<glm::TVec3<f32>>();
+
+        // Allocate bytes of memory for this uniform block.
+        // -------------------
+        // projection: 64b
+        // view: 64b
+        // cam_pos: 16b
+        let total = 2 * mat_4_size + vec3_size;
+        OpenGL::bind_ubo(binding_point, total as isize)
+    }
+
+    pub fn create_lights_ubo(binding_point: u32) -> u32 {
+        // Allocate bytes of memory for this uniform block.
+        // -------------------
+        // type: 4b
+        // light_dir: 12b
+        // light_pos: 12b
+        // ambient: 12b
+        // diffuse: 12b
+        // specular: 12b
+        let total = 96;
+        OpenGL::bind_ubo(binding_point, 2 * total as isize)
+    }
+
+    // Generate uniform object buffer then bind it to a
+    // given binding point.
+    pub fn bind_ubo(binding_point: u32, size: isize) -> u32 {
+        let ubo = OpenGL::gen_buffer();
+
+        unsafe {
+            gl::BindBuffer(gl::UNIFORM_BUFFER, ubo);
+            gl::BufferData(
+                gl::UNIFORM_BUFFER,
+                size,
+                ptr::null(),
+                gl::DYNAMIC_DRAW,
+            );
+            gl::BindBufferBase(gl::UNIFORM_BUFFER, binding_point, ubo);
+
+            // Cleanup.
+            gl::BindBuffer(gl::UNIFORM_BUFFER, 0);
+        }
+
+        ubo
+    }
+
+    pub fn set_uniform_block(shader_id: u32, binding_point: u32, name: &str) {
+        unsafe {
+            let c_str = CString::new(name).unwrap();
+            let index = gl::GetUniformBlockIndex(shader_id, c_str.as_ptr());
+            gl::UniformBlockBinding(shader_id, index, binding_point);
+        }
+    }
+
+    pub fn set_mat4_to_ubo(matrix: glm::Mat4, ubo: u32, offset: isize) {
+        let matrix = glm::value_ptr(&matrix);
+
+        unsafe {
+            gl::BindBuffer(gl::UNIFORM_BUFFER, ubo);
+            gl::BufferSubData(
+                gl::UNIFORM_BUFFER,
+                offset,
+                mem::size_of::<glm::Mat4>() as isize,
+                matrix as *const _ as *const c_void,
+            );
+            gl::BindBuffer(gl::UNIFORM_BUFFER, 0);
+        }
+    }
+
+    pub fn set_vec3_to_ubo(vec: glm::TVec3<f32>, ubo: u32, offset: isize) {
+        let vec = glm::value_ptr(&vec);
+
+        unsafe {
+            gl::BindBuffer(gl::UNIFORM_BUFFER, ubo);
+            gl::BufferSubData(
+                gl::UNIFORM_BUFFER,
+                offset,
+                mem::size_of::<glm::TVec3<f32>>() as isize,
+                vec as *const _ as *const c_void,
+            );
+            gl::BindBuffer(gl::UNIFORM_BUFFER, 0);
+        }
+    }
+
+    pub fn set_int_to_ubo(int: i32, ubo: u32, offset: isize) {
+        let r_int: *const i32 = &int;
+
+        unsafe {
+            gl::BindBuffer(gl::UNIFORM_BUFFER, ubo);
+            gl::BufferSubData(
+                gl::UNIFORM_BUFFER,
+                offset,
+                mem::size_of::<i32>() as isize,
+                r_int as *const c_void,
+            );
+            gl::BindBuffer(gl::UNIFORM_BUFFER, 0);
+        }
+    }
+
+    pub fn clear() {
+        unsafe {
+            gl::Enable(gl::DEPTH_TEST);
+            // Clear color buffer with the color specified by gl::ClearColor.
+            gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
+        }
+    }
+
     // Create a little plane.
     // Return vao and texture id and positions.
-    pub fn gen_plane(pos: glm::TVec3<f32>) -> (u32, u32, glm::TVec3<f32>) {
+    pub fn gen_plane() -> (u32, bool) {
         let vertices: [f32; 20] = [
             0.5, 0.5, 0., 1., 1., 0.5, -0.5, 0., 1., 0., -0.5, -0.5, 0., 0.,
             0., -0.5, 0.5, 0., 0., 1.,
@@ -58,9 +167,6 @@ impl OpenGL {
         let vao = OpenGL::gen_vao();
         let vbo = OpenGL::gen_buffer();
         let ebo = OpenGL::gen_buffer();
-
-        let mut t = Texture::new("./assets/textures/wall.jpg");
-        t.generate_texture();
 
         unsafe {
             gl::BindVertexArray(vao);
@@ -102,64 +208,40 @@ impl OpenGL {
             gl::EnableVertexAttribArray(1);
         }
 
-        (vao, t.texture_id, pos)
+        (vao, true)
     }
 
     // Create a little cube
     // Return vao and texture id and positions.
-    pub fn gen_cube(pos: glm::TVec3<f32>) -> (u32, u32, glm::TVec3<f32>) {
+    pub fn gen_cube() -> (u32, bool) {
         // position + text coord + normal
         let vertices: [f32; 288] = [
-             -0.5, -0.5, -0.5,  0.0, 0.0, 0., 0., -1.,
-              0.5, -0.5, -0.5,  1.0, 0.0, 0., 0., -1.,
-              0.5,  0.5, -0.5,  1.0, 1.0, 0., 0., -1.,
-              0.5,  0.5, -0.5,  1.0, 1.0, 0., 0., -1.,
-             -0.5,  0.5, -0.5,  0.0, 1.0, 0., 0., -1.,
-             -0.5, -0.5, -0.5,  0.0, 0.0, 0., 0., -1.,
-
-             -0.5, -0.5,  0.5,  0.0, 0.0, 0., 0., 1.,
-              0.5, -0.5,  0.5,  1.0, 0.0, 0., 0., 1.,
-              0.5,  0.5,  0.5,  1.0, 1.0, 0., 0., 1.,
-              0.5,  0.5,  0.5,  1.0, 1.0, 0., 0., 1.,
-             -0.5,  0.5,  0.5,  0.0, 1.0, 0., 0., 1.,
-             -0.5, -0.5,  0.5,  0.0, 0.0, 0., 0., 1.,
-
-             -0.5,  0.5,  0.5,  1.0, 0.0, -1., 0., 0.,
-             -0.5,  0.5, -0.5,  1.0, 1.0, -1., 0., 0.,
-             -0.5, -0.5, -0.5,  0.0, 1.0, -1., 0., 0.,
-             -0.5, -0.5, -0.5,  0.0, 1.0, -1., 0., 0.,
-             -0.5, -0.5,  0.5,  0.0, 0.0, -1., 0., 0.,
-             -0.5,  0.5,  0.5,  1.0, 0.0, -1., 0., 0.,
-
-              0.5,  0.5,  0.5,  1.0, 0.0, 1., 0., 0.,
-              0.5,  0.5, -0.5,  1.0, 1.0, 1., 0., 0.,
-              0.5, -0.5, -0.5,  0.0, 1.0, 1., 0., 0.,
-              0.5, -0.5, -0.5,  0.0, 1.0, 1., 0., 0.,
-              0.5, -0.5,  0.5,  0.0, 0.0, 1., 0., 0.,
-              0.5,  0.5,  0.5,  1.0, 0.0, 1., 0., 0.,
-
-             -0.5, -0.5, -0.5,  0.0, 1.0, 0., -1., 0.,
-              0.5, -0.5, -0.5,  1.0, 1.0, 0., -1., 0.,
-              0.5, -0.5,  0.5,  1.0, 0.0, 0., -1., 0.,
-              0.5, -0.5,  0.5,  1.0, 0.0, 0., -1., 0.,
-             -0.5, -0.5,  0.5,  0.0, 0.0, 0., -1., 0.,
-             -0.5, -0.5, -0.5,  0.0, 1.0, 0., -1., 0.,
-
-             -0.5,  0.5, -0.5,  0.0, 1.0, 0., 1., 0.,
-              0.5,  0.5, -0.5,  1.0, 1.0, 0., 1., 0.,
-              0.5,  0.5,  0.5,  1.0, 0.0, 0., 1., 0.,
-              0.5,  0.5,  0.5,  1.0, 0.0, 0., 1., 0.,
-             -0.5,  0.5,  0.5,  0.0, 0.0, 0., 1., 0.,
-             -0.5,  0.5, -0.5,  0.0, 1.0, 0., 1., 0.,
+            -0.5, -0.5, -0.5, 0.0, 0.0, 0., 0., -1., 0.5, -0.5, -0.5, 1.0, 0.0,
+            0., 0., -1., 0.5, 0.5, -0.5, 1.0, 1.0, 0., 0., -1., 0.5, 0.5, -0.5,
+            1.0, 1.0, 0., 0., -1., -0.5, 0.5, -0.5, 0.0, 1.0, 0., 0., -1.,
+            -0.5, -0.5, -0.5, 0.0, 0.0, 0., 0., -1., -0.5, -0.5, 0.5, 0.0, 0.0,
+            0., 0., 1., 0.5, -0.5, 0.5, 1.0, 0.0, 0., 0., 1., 0.5, 0.5, 0.5,
+            1.0, 1.0, 0., 0., 1., 0.5, 0.5, 0.5, 1.0, 1.0, 0., 0., 1., -0.5,
+            0.5, 0.5, 0.0, 1.0, 0., 0., 1., -0.5, -0.5, 0.5, 0.0, 0.0, 0., 0.,
+            1., -0.5, 0.5, 0.5, 1.0, 0.0, -1., 0., 0., -0.5, 0.5, -0.5, 1.0,
+            1.0, -1., 0., 0., -0.5, -0.5, -0.5, 0.0, 1.0, -1., 0., 0., -0.5,
+            -0.5, -0.5, 0.0, 1.0, -1., 0., 0., -0.5, -0.5, 0.5, 0.0, 0.0, -1.,
+            0., 0., -0.5, 0.5, 0.5, 1.0, 0.0, -1., 0., 0., 0.5, 0.5, 0.5, 1.0,
+            0.0, 1., 0., 0., 0.5, 0.5, -0.5, 1.0, 1.0, 1., 0., 0., 0.5, -0.5,
+            -0.5, 0.0, 1.0, 1., 0., 0., 0.5, -0.5, -0.5, 0.0, 1.0, 1., 0., 0.,
+            0.5, -0.5, 0.5, 0.0, 0.0, 1., 0., 0., 0.5, 0.5, 0.5, 1.0, 0.0, 1.,
+            0., 0., -0.5, -0.5, -0.5, 0.0, 1.0, 0., -1., 0., 0.5, -0.5, -0.5,
+            1.0, 1.0, 0., -1., 0., 0.5, -0.5, 0.5, 1.0, 0.0, 0., -1., 0., 0.5,
+            -0.5, 0.5, 1.0, 0.0, 0., -1., 0., -0.5, -0.5, 0.5, 0.0, 0.0, 0.,
+            -1., 0., -0.5, -0.5, -0.5, 0.0, 1.0, 0., -1., 0., -0.5, 0.5, -0.5,
+            0.0, 1.0, 0., 1., 0., 0.5, 0.5, -0.5, 1.0, 1.0, 0., 1., 0., 0.5,
+            0.5, 0.5, 1.0, 0.0, 0., 1., 0., 0.5, 0.5, 0.5, 1.0, 0.0, 0., 1.,
+            0., -0.5, 0.5, 0.5, 0.0, 0.0, 0., 1., 0., -0.5, 0.5, -0.5, 0.0,
+            1.0, 0., 1., 0.,
         ];
-        // let indices: [i32; 6] = [0, 1, 3, 1, 2, 3];
 
         let vao = OpenGL::gen_vao();
         let vbo = OpenGL::gen_buffer();
-        // let ebo = OpenGL::gen_buffer();
-
-        let mut t = Texture::new("./assets/textures/wall.jpg");
-        t.generate_texture();
 
         unsafe {
             gl::BindVertexArray(vao);
@@ -171,14 +253,6 @@ impl OpenGL {
                 &vertices[0] as *const f32 as *const c_void,
                 gl::STATIC_DRAW,
             );
-
-            // gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, ebo);
-            // gl::BufferData(
-            //     gl::ELEMENT_ARRAY_BUFFER,
-            //     (indices.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
-            //     &indices[0] as *const i32 as *const c_void,
-            //     gl::STATIC_DRAW,
-            // );
 
             gl::VertexAttribPointer(
                 0,
@@ -212,6 +286,45 @@ impl OpenGL {
             gl::EnableVertexAttribArray(2);
         }
 
-        (vao, t.texture_id, pos)
+        (vao, false)
+    }
+
+    pub fn use_shader(id: u32) {
+        unsafe { gl::UseProgram(id) }
+    }
+
+    pub fn draw_with_ebo(vao: u32, texture_id: Option<u32>, triangles: i32) {
+        unsafe {
+            if let Some(id) = texture_id {
+                gl::ActiveTexture(gl::TEXTURE0);
+                gl::BindTexture(gl::TEXTURE_2D, id);
+            };
+
+            gl::BindVertexArray(vao);
+            gl::DrawElements(
+                gl::TRIANGLES,
+                triangles,
+                gl::UNSIGNED_INT,
+                ptr::null(),
+            );
+
+            // Cleanup
+            gl::BindVertexArray(0);
+        }
+    }
+
+    pub fn draw(vao: u32, texture_id: Option<u32>, triangles: i32) {
+        unsafe {
+            if let Some(id) = texture_id {
+                gl::ActiveTexture(gl::TEXTURE0);
+                gl::BindTexture(gl::TEXTURE_2D, id);
+            };
+
+            gl::BindVertexArray(vao);
+            gl::DrawArrays(gl::TRIANGLES, 0, triangles);
+
+            // Cleanup
+            gl::BindVertexArray(0);
+        }
     }
 }

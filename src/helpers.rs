@@ -1,43 +1,94 @@
 use crate::{
-    primitives::{Cube, LightSource, Plane},
-    world::Entity,
+    components::{Camera, Light, Mesh, Primitives, Transform},
+    constants::SCENE_PATH,
+    ecs::Entity,
 };
-use nalgebra_glm as glm;
 use ron::de;
 use serde::Deserialize;
 use std::fs::File;
 
-#[derive(Debug, Deserialize)]
+static mut IS_FIRST_LOAD: bool = true;
+
+#[derive(Deserialize)]
 struct Model {
     items: Vec<Elements>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Deserialize)]
 enum Elements {
-    Cube(f32, f32, f32),
-    LightSource(f32, f32, f32),
-    Plane(f32, f32, f32),
+    Camera(usize, Transform),
+    Cube(usize, Transform),
+    Plane(usize, Transform),
+    LightSource(usize, Transform, Light),
 }
 
-pub fn load_entities() -> Vec<Entity> {
+pub fn load_scene(path: &str) -> Vec<Entity> {
     let mut entities: Vec<Entity> = vec![];
-    let file = File::open("assets/ressources/entities.ron")
-        .expect("Crash when openning the entities file");
+
+    let path = [SCENE_PATH, path].join("");
+    let file = File::open(path).expect("Crash when openning the entities file");
 
     let model: Model =
         de::from_reader(&file).expect("Crash when deserializing entities");
 
-    model.items.iter().for_each(|item| match *item {
-        Elements::Cube(x, y, z) => {
-            entities.push(Box::new(Cube::new(glm::vec3(x, y, z))))
+    for item in model.items.into_iter() {
+        match item {
+            Elements::LightSource(id, transform, mut light) => {
+                let mut mesh = Mesh::default();
+                mesh.add_shader();
+                mesh.add_texture("./assets/textures/wall.jpg");
+                mesh.add_primitive(Primitives::Cube);
+
+                light.set_ubo();
+
+                let entity = Entity::from_file(id)
+                    .with::<Transform>(transform)
+                    .with::<Light>(light)
+                    .with::<Mesh>(mesh);
+
+                entities.push(entity);
+            }
+            Elements::Cube(id, transform) => {
+                let mut mesh = Mesh::default();
+                mesh.add_shader();
+                mesh.add_texture("./assets/textures/wall.jpg");
+                mesh.add_primitive(Primitives::Cube);
+
+                let entity = Entity::from_file(id)
+                    .with::<Transform>(transform)
+                    .with::<Mesh>(mesh);
+
+                entities.push(entity);
+            }
+            Elements::Plane(id, transform) => {
+                let mut mesh = Mesh::default();
+                mesh.add_shader();
+                mesh.add_texture("./assets/textures/wall.jpg");
+                mesh.add_primitive(Primitives::Plane);
+
+                let entity = Entity::from_file(id)
+                    .with::<Transform>(transform)
+                    .with::<Mesh>(mesh);
+
+                entities.push(entity);
+            }
+            Elements::Camera(id, transform) => {
+                if unsafe { IS_FIRST_LOAD } {
+                    let entity = Entity::from_file(id)
+                        .with::<Transform>(transform)
+                        .with::<Camera>(Camera::default());
+
+                    entities.push(entity);
+                }
+            }
         }
-        Elements::LightSource(x, y, z) => {
-            entities.push(Box::new(LightSource::new(glm::vec3(x, y, z))))
+    }
+
+    unsafe {
+        if IS_FIRST_LOAD {
+            IS_FIRST_LOAD = false
         }
-        Elements::Plane(x, y, z) => {
-            entities.push(Box::new(Plane::new(glm::vec3(x, y, z))))
-        }
-    });
+    }
 
     entities
 }

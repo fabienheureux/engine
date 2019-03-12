@@ -41,6 +41,12 @@ impl Window {
         }
     }
 
+    pub fn swap_gl(&self) {
+        self.gl_window
+            .swap_buffers()
+            .expect("Problem with gl buffer swap");
+    }
+
     /// Hide and Grab the cursor.
     pub fn hide_cursor(&self, is_hide: bool) {
         self.gl_window

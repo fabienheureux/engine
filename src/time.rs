@@ -1,6 +1,6 @@
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Time {
     pub dt: f64,
     pub now: Duration,

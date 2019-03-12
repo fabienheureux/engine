@@ -5,16 +5,17 @@ use std::path::Path;
 
 /// We don't want to keep any texture images in
 /// the memory, so we just store the file path.
-pub struct Texture<'a> {
-    pub texture_id: u32,
-    texture_path: &'a str,
+#[derive(Debug)]
+pub struct Texture {
+    pub id: u32,
+    texture_path: String,
 }
 
-impl<'a> Texture<'a> {
-    pub fn new(path: &'a str) -> Self {
+impl Texture {
+    pub fn new(path: &str) -> Self {
         Self {
-            texture_id: 0,
-            texture_path: path,
+            id: 0,
+            texture_path: String::from(path),
         }
     }
 
@@ -22,15 +23,15 @@ impl<'a> Texture<'a> {
     /// to the GPU.
     /// For now, there are some openGL config stuff.
     pub fn generate_texture(&mut self) {
-        let image = Self::load(self.texture_path).to_rgb();
+        let image = Self::load(self.texture_path.as_str()).to_rgb();
         let width = image.width() as i32;
         let height = image.height() as i32;
 
         let raw_data = image.into_raw();
 
         unsafe {
-            gl::GenTextures(1, &mut self.texture_id);
-            gl::BindTexture(gl::TEXTURE, self.texture_id);
+            gl::GenTextures(1, &mut self.id);
+            gl::BindTexture(gl::TEXTURE, self.id);
 
             gl::TexParameteri(
                 gl::TEXTURE_2D,

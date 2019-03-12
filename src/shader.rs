@@ -65,11 +65,12 @@ impl Shader {
 
     pub fn set_vec3(&self, var_name: &str, values: &(f32, f32, f32)) {
         let shader_variable = self.get_location(var_name);
-        unsafe { gl::Uniform3f(shader_variable, values.0, values.1, values.2) }
+        let (a, b, c) = *values;
+        unsafe { gl::Uniform3f(shader_variable, a, b, c) }
     }
 
     #[allow(unused)]
-    pub fn set_uniform4f(&self, var_name: &str, values: &(f32, f32, f32, f32)) {
+    pub fn set_vec4(&self, var_name: &str, values: &(f32, f32, f32, f32)) {
         let shader_variable = self.get_location(var_name);
         let (a, b, c, d) = *values;
         unsafe {
