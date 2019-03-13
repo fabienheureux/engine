@@ -52,6 +52,12 @@ impl Shader {
         self
     }
 
+    pub fn delete_program(&self) {
+        unsafe {
+            gl::DeleteProgram(self.id);
+        }
+    }
+
     #[allow(dead_code)]
     pub fn set_int(&self, var_name: &str, value: i32) {
         let shader_variable = self.get_location(var_name);
@@ -78,7 +84,6 @@ impl Shader {
         }
     }
 
-    #[allow(dead_code)]
     pub fn set_matrix4(&self, var_name: &str, transform: &[f32]) {
         let shader_variable = self.get_location(var_name);
         unsafe {
@@ -91,7 +96,6 @@ impl Shader {
         }
     }
 
-    #[allow(dead_code)]
     fn get_location(&self, var_name: &str) -> GLint {
         let var_name = CString::new(var_name).unwrap();
         unsafe { gl::GetUniformLocation(self.id, var_name.as_ptr()) }

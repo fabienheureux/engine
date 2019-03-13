@@ -37,14 +37,17 @@ impl System for Renderer {
             light.set_to_shader(state.lights_ubo, &transform);
         }
 
-        shader.set_int("material.diffuse", texture.id as i32);
+        if let Some(texture) = texture {
+            shader.set_int("material.diffuse", texture.id as i32);
+        }
         shader.set_vec3("material.specular", &(0.5, 0.5, 0.5));
         shader.set_float("material.shininess", 32.);
+        shader.set_vec3("color", &mesh.color);
 
         if mesh.has_ebo {
-            OpenGL::draw_with_ebo(vao, Some(texture.id), 6);
+            OpenGL::draw_with_ebo(vao, texture, 6);
         } else {
-            OpenGL::draw(vao, Some(texture.id), 36);
+            OpenGL::draw(vao, texture, 36);
         }
     }
 }

@@ -34,11 +34,7 @@ pub fn load_scene(path: &str) -> Vec<Entity> {
     for item in model.items.into_iter() {
         match item {
             Elements::LightSource(id, transform, mut light) => {
-                let mut mesh = Mesh::default();
-                mesh.add_shader();
-                mesh.add_texture("./assets/textures/wall.jpg");
-                mesh.add_primitive(Primitives::Cube);
-
+                let mesh = Mesh::default();
                 light.set_ubo();
 
                 let entity = Entity::from_file(id)
@@ -49,10 +45,11 @@ pub fn load_scene(path: &str) -> Vec<Entity> {
                 entities.push(entity);
             }
             Elements::Cube(id, transform) => {
-                let mut mesh = Mesh::default();
-                mesh.add_shader();
-                mesh.add_texture("./assets/textures/wall.jpg");
-                mesh.add_primitive(Primitives::Cube);
+                let mesh = Mesh::new(
+                    Primitives::Cube,
+                    "./assets/textures/wall.jpg",
+                    ("default_material", "default_material"),
+                );
 
                 let entity = Entity::from_file(id)
                     .with::<Transform>(transform)
@@ -61,10 +58,11 @@ pub fn load_scene(path: &str) -> Vec<Entity> {
                 entities.push(entity);
             }
             Elements::Plane(id, transform) => {
-                let mut mesh = Mesh::default();
-                mesh.add_shader();
-                mesh.add_texture("./assets/textures/wall.jpg");
-                mesh.add_primitive(Primitives::Plane);
+                let mesh = Mesh::new(
+                    Primitives::Plane,
+                    "./assets/textures/wall.jpg",
+                    ("default_material", "default_material"),
+                );
 
                 let entity = Entity::from_file(id)
                     .with::<Transform>(transform)

@@ -1,4 +1,5 @@
 use gl;
+use crate::texture::Texture;
 use gl::types::{GLfloat, GLsizei, GLsizeiptr};
 use glutin::{GlContext, GlWindow};
 use nalgebra_glm as glm;
@@ -293,11 +294,11 @@ impl OpenGL {
         unsafe { gl::UseProgram(id) }
     }
 
-    pub fn draw_with_ebo(vao: u32, texture_id: Option<u32>, triangles: i32) {
+    pub fn draw_with_ebo(vao: u32, texture: Option<&Texture>, triangles: i32) {
         unsafe {
-            if let Some(id) = texture_id {
+            if let Some(texture) = texture {
                 gl::ActiveTexture(gl::TEXTURE0);
-                gl::BindTexture(gl::TEXTURE_2D, id);
+                gl::BindTexture(gl::TEXTURE_2D, texture.id);
             };
 
             gl::BindVertexArray(vao);
@@ -313,11 +314,11 @@ impl OpenGL {
         }
     }
 
-    pub fn draw(vao: u32, texture_id: Option<u32>, triangles: i32) {
+    pub fn draw(vao: u32, texture: Option<&Texture>, triangles: i32) {
         unsafe {
-            if let Some(id) = texture_id {
+            if let Some(texture) = texture {
                 gl::ActiveTexture(gl::TEXTURE0);
-                gl::BindTexture(gl::TEXTURE_2D, id);
+                gl::BindTexture(gl::TEXTURE_2D, texture.id);
             };
 
             gl::BindVertexArray(vao);
