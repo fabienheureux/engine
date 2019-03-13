@@ -26,7 +26,6 @@ impl Mesh {
 
         let mut texture = None;
         if !texture_path.is_empty() {
-            dbg!("asdhjgf");
             texture = Some(Mesh::set_texture(texture_path));
         }
 

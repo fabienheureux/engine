@@ -1,3 +1,4 @@
+use crate::constants::TEXTURE_PATH;
 use gl;
 use image;
 use std::ffi::c_void;
@@ -15,7 +16,7 @@ impl Texture {
     pub fn new(path: &str) -> Self {
         Self {
             id: 0,
-            texture_path: String::from(path),
+            texture_path: String::from([TEXTURE_PATH, path].join("")),
         }
     }
 
@@ -27,11 +28,9 @@ impl Texture {
         let width = image.width() as i32;
         let height = image.height() as i32;
 
-        let raw_data = image.into_raw();
-
         unsafe {
             gl::GenTextures(1, &mut self.id);
-            gl::BindTexture(gl::TEXTURE, self.id);
+            gl::BindTexture(gl::TEXTURE_2D, self.id);
 
             gl::TexParameteri(
                 gl::TEXTURE_2D,
@@ -64,7 +63,7 @@ impl Texture {
                 0,
                 gl::RGB,
                 gl::UNSIGNED_BYTE,
-                &raw_data[0] as *const u8 as *const c_void,
+                image.into_vec().as_ptr() as *const c_void,
             );
 
             gl::GenerateMipmap(gl::TEXTURE_2D);

@@ -48,6 +48,7 @@
        rotate: [0., 0., 0.],
        scale: [1., 1., 1.],
        ),
+     "pos_debug.png",
      ),
  /* TODO: Add normal for light casting */
  Plane(
@@ -57,6 +58,7 @@
        rotate: [0., 0., 0.],
        scale: [1., 1., 1.],
        ),
+     "color_debug.png",
      )
  ]
  )

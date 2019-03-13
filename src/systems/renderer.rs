@@ -37,8 +37,8 @@ impl System for Renderer {
             light.set_to_shader(state.lights_ubo, &transform);
         }
 
-        if let Some(texture) = texture {
-            shader.set_int("material.diffuse", texture.id as i32);
+        if texture.is_some() {
+            shader.set_int("material.diffuse", 0);
         }
         shader.set_vec3("material.specular", &(0.5, 0.5, 0.5));
         shader.set_float("material.shininess", 32.);

@@ -17,8 +17,8 @@ struct Model {
 #[derive(Deserialize)]
 enum Elements {
     Camera(usize, Transform),
-    Cube(usize, Transform),
-    Plane(usize, Transform),
+    Cube(usize, Transform, String),
+    Plane(usize, Transform, String),
     LightSource(usize, Transform, Light),
 }
 
@@ -44,10 +44,10 @@ pub fn load_scene(path: &str) -> Vec<Entity> {
 
                 entities.push(entity);
             }
-            Elements::Cube(id, transform) => {
+            Elements::Cube(id, transform, texture) => {
                 let mesh = Mesh::new(
                     Primitives::Cube,
-                    "./assets/textures/wall.jpg",
+                    texture.as_str(),
                     ("default_material", "default_material"),
                 );
 
@@ -57,10 +57,10 @@ pub fn load_scene(path: &str) -> Vec<Entity> {
 
                 entities.push(entity);
             }
-            Elements::Plane(id, transform) => {
+            Elements::Plane(id, transform, texture) => {
                 let mesh = Mesh::new(
                     Primitives::Plane,
-                    "./assets/textures/wall.jpg",
+                    texture.as_str(),
                     ("default_material", "default_material"),
                 );
 
