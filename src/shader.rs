@@ -52,6 +52,7 @@ impl Shader {
         self
     }
 
+    #[allow(unused)]
     pub fn delete_program(&self) {
         unsafe {
             gl::DeleteProgram(self.id);

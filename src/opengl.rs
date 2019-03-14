@@ -21,6 +21,7 @@ impl OpenGL {
                 gl_window.get_proc_address(symbol) as *const _
             });
 
+            gl::Enable(gl::DEPTH_TEST);
             gl::ClearColor(0.0, 0.0, 0.0, 0.0);
         }
     }
@@ -150,8 +151,8 @@ impl OpenGL {
 
     pub fn clear() {
         unsafe {
-            gl::Enable(gl::DEPTH_TEST);
             // Clear color buffer with the color specified by gl::ClearColor.
+            // Also clear the z buffer.
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
         }
     }
