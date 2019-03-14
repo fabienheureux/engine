@@ -22,6 +22,7 @@ impl OpenGL {
             });
 
             gl::Enable(gl::DEPTH_TEST);
+            gl::Enable(gl::STENCIL_TEST);
             gl::ClearColor(0.0, 0.0, 0.0, 0.0);
         }
     }
@@ -152,8 +153,8 @@ impl OpenGL {
     pub fn clear() {
         unsafe {
             // Clear color buffer with the color specified by gl::ClearColor.
-            // Also clear the z buffer.
-            gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
+            // Also clear the depth and stencil buffer.
+            gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT | gl::STENCIL_BUFFER_BIT);
         }
     }
 
