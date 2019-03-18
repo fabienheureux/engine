@@ -1,5 +1,4 @@
 use gl;
-use crate::texture::Texture;
 use gl::types::{GLfloat, GLsizei, GLsizeiptr};
 use glutin::{GlContext, GlWindow};
 use nalgebra_glm as glm;
@@ -154,7 +153,11 @@ impl OpenGL {
         unsafe {
             // Clear color buffer with the color specified by gl::ClearColor.
             // Also clear the depth and stencil buffer.
-            gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT | gl::STENCIL_BUFFER_BIT);
+            gl::Clear(
+                gl::COLOR_BUFFER_BIT
+                    | gl::DEPTH_BUFFER_BIT
+                    | gl::STENCIL_BUFFER_BIT,
+            );
         }
     }
 
@@ -292,15 +295,62 @@ impl OpenGL {
         (vao, false)
     }
 
+    pub fn load_2d_texture(width: i32, height: i32, image: Vec<u8>) -> u32 {
+        let mut id: u32 = 0;
+
+        unsafe {
+            gl::GenTextures(1, &mut id);
+            gl::BindTexture(gl::TEXTURE_2D, id);
+
+            gl::TexParameteri(
+                gl::TEXTURE_2D,
+                gl::TEXTURE_WRAP_S,
+                gl::REPEAT as i32,
+            );
+            gl::TexParameteri(
+                gl::TEXTURE_2D,
+                gl::TEXTURE_WRAP_T,
+                gl::REPEAT as i32,
+            );
+            gl::TexParameteri(
+                gl::TEXTURE_2D,
+                gl::TEXTURE_MIN_FILTER,
+                gl::LINEAR as i32,
+            );
+            gl::TexParameteri(
+                gl::TEXTURE_2D,
+                gl::TEXTURE_MAG_FILTER,
+                gl::LINEAR as i32,
+            );
+
+            // Load texture data.
+            gl::TexImage2D(
+                gl::TEXTURE_2D,
+                0,
+                gl::RGB as i32,
+                width,
+                height,
+                0,
+                gl::RGB,
+                gl::UNSIGNED_BYTE,
+                image.as_ptr() as *const c_void,
+            );
+
+            gl::GenerateMipmap(gl::TEXTURE_2D);
+        }
+
+        id
+    }
+
     pub fn use_shader(id: u32) {
         unsafe { gl::UseProgram(id) }
     }
 
-    pub fn draw_with_ebo(vao: u32, texture: Option<&Texture>, triangles: i32) {
+    pub fn draw_with_ebo(vao: u32, texture: Option<u32>, triangles: i32) {
         unsafe {
-            if let Some(texture) = texture {
+            if let Some(texture_id) = texture {
                 gl::ActiveTexture(gl::TEXTURE0);
-                gl::BindTexture(gl::TEXTURE_2D, texture.id);
+                gl::BindTexture(gl::TEXTURE_2D, texture_id);
             };
 
             gl::BindVertexArray(vao);
@@ -316,11 +366,11 @@ impl OpenGL {
         }
     }
 
-    pub fn draw(vao: u32, texture: Option<&Texture>, triangles: i32) {
+    pub fn draw(vao: u32, texture: Option<u32>, triangles: i32) {
         unsafe {
-            if let Some(texture) = texture {
+            if let Some(texture_id) = texture {
                 gl::ActiveTexture(gl::TEXTURE0);
-                gl::BindTexture(gl::TEXTURE_2D, texture.id);
+                gl::BindTexture(gl::TEXTURE_2D, texture_id);
             };
 
             gl::BindVertexArray(vao);

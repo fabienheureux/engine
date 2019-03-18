@@ -1,4 +1,5 @@
 use crate::{
+    asset_manager::AssetManager,
     constants::{SCREEN_HEIGHT, SCREEN_WIDTH},
     opengl::OpenGL,
     time::Time,
@@ -12,6 +13,7 @@ pub struct GameState {
     pub camera_ubo: u32,
     pub lights_ubo: u32,
     pub editor_mode: bool,
+    pub asset_manager: AssetManager,
 }
 
 impl GameState {
@@ -35,6 +37,7 @@ impl GameState {
             editor_mode: true,
             camera_ubo,
             lights_ubo,
+            asset_manager: AssetManager::default(),
         }
     }
 }

@@ -27,7 +27,7 @@ impl System for Renderer {
 
         let vao = mesh.get_vao();
         let shader = mesh.get_shader();
-        let texture = mesh.get_texture();
+        let texture_key = mesh.get_texture();
 
         OpenGL::use_shader(shader.id);
 
@@ -37,12 +37,17 @@ impl System for Renderer {
             light.set_to_shader(state.lights_ubo, &transform);
         }
 
-        if texture.is_some() {
+        if texture_key.is_some() {
             shader.set_int("material.diffuse", 0);
         }
         shader.set_vec3("material.specular", &(0.5, 0.5, 0.5));
         shader.set_float("material.shininess", 32.);
         shader.set_vec3("color", &mesh.color);
+
+        let mut texture = None;
+        if let Some(texture_key) = texture_key {
+            texture = state.asset_manager.get_asset(texture_key.as_str()).gl_id;
+        }
 
         if mesh.has_ebo {
             OpenGL::draw_with_ebo(vao, texture, 6);

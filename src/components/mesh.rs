@@ -1,4 +1,4 @@
-use crate::{opengl::OpenGL, shader::Shader, texture::Texture};
+use crate::{opengl::OpenGL, shader::Shader};
 use std::default::Default;
 
 pub enum Primitives {
@@ -10,7 +10,7 @@ pub enum Primitives {
 pub struct Mesh {
     pub vao: u32,
     pub has_ebo: bool,
-    pub texture: Option<Texture>,
+    pub texture: Option<String>,
     pub shader: Shader,
     pub color: (f32, f32, f32),
 }
@@ -18,16 +18,11 @@ pub struct Mesh {
 impl Mesh {
     pub fn new(
         prim: Primitives,
-        texture_path: &str,
+        texture: Option<String>,
         (vert, frag): (&str, &str),
     ) -> Self {
         let shader = Mesh::set_shader(vert, frag);
         let (vao, has_ebo) = Mesh::get_gl_info(prim);
-
-        let mut texture = None;
-        if !texture_path.is_empty() {
-            texture = Some(Mesh::set_texture(texture_path));
-        }
 
         Self {
             shader,
@@ -43,12 +38,6 @@ impl Mesh {
             Primitives::Plane => OpenGL::gen_plane(),
             Primitives::Cube => OpenGL::gen_cube(),
         }
-    }
-
-    pub fn set_texture(texture_path: &str) -> Texture {
-        let mut texture = Texture::new(texture_path);
-        texture.generate_texture();
-        texture
     }
 
     pub fn set_shader(vert: &str, frag: &str) -> Shader {
@@ -68,7 +57,7 @@ impl Mesh {
         self.vao
     }
 
-    pub fn get_texture(&self) -> Option<&Texture> {
+    pub fn get_texture(&self) -> Option<&String> {
         self.texture.as_ref()
     }
 }

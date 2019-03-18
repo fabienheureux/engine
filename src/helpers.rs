@@ -2,6 +2,7 @@ use crate::{
     components::{Camera, Light, Mesh, Primitives, Transform},
     constants::SCENE_PATH,
     ecs::Entity,
+    game_state::GameState,
 };
 use ron::de;
 use serde::Deserialize;
@@ -22,7 +23,8 @@ enum Elements {
     LightSource(usize, Transform, Light),
 }
 
-pub fn load_scene(path: &str) -> Vec<Entity> {
+pub fn load_scene(path: &str, state: &mut GameState) -> Vec<Entity> {
+    let asset_manager = &mut state.asset_manager;
     let mut entities: Vec<Entity> = vec![];
 
     let path = [SCENE_PATH, path].join("");
@@ -45,9 +47,17 @@ pub fn load_scene(path: &str) -> Vec<Entity> {
                 entities.push(entity);
             }
             Elements::Cube(id, transform, texture) => {
+                let texture = texture.as_str();
+                let mut opt_tex = None;
+
+                if !texture.is_empty() {
+                    opt_tex = Some(asset_manager.add_texture(texture));
+                    asset_manager.gl_load(texture);
+                }
+
                 let mesh = Mesh::new(
                     Primitives::Cube,
-                    texture.as_str(),
+                    opt_tex,
                     ("default_material", "default_material"),
                 );
 
@@ -58,9 +68,17 @@ pub fn load_scene(path: &str) -> Vec<Entity> {
                 entities.push(entity);
             }
             Elements::Plane(id, transform, texture) => {
+                let texture = texture.as_str();
+                let mut opt_tex = None;
+
+                if !texture.is_empty() {
+                    opt_tex = Some(asset_manager.add_texture(texture));
+                    asset_manager.gl_load(texture);
+                }
+
                 let mesh = Mesh::new(
                     Primitives::Plane,
-                    texture.as_str(),
+                    opt_tex,
                     ("default_material", "default_material"),
                 );
 

@@ -1,3 +1,29 @@
+/// This is a game engine in development. This engine is
+/// the fondation for a pseudo-3D game.
+///
+/// TODO
+///
+/// ECS:
+///  - Data should be flat in memory.
+///  - It should be possible to have multi mutable ref of components
+///    from our systems.
+///
+/// Asset Manager:
+///  - Re-use id for the asset storage.
+///  - Could we do better than cloning the key?
+///  - We should guess the image extension.
+///
+/// Rendering:
+///  - We should have a strong separation between opengl stuff and the
+///    our engine.
+///  - Add FBO.
+///
+/// ...
+/// ...
+///
+/// - Release the game.
+///
+mod asset_manager;
 mod components;
 mod constants;
 mod ecs;
@@ -8,7 +34,6 @@ mod helpers;
 mod opengl;
 mod shader;
 mod systems;
-mod texture;
 mod time;
 mod window;
 
@@ -31,7 +56,7 @@ fn main() -> Result<(), notify::Error> {
     let mut world = World::new();
 
     // Load scene for the first time.
-    world.load_entities(helpers::load_scene("scene_1.ron"));
+    world.load_entities(helpers::load_scene("scene_1.ron", &mut state));
 
     // Add systems
     world.add_system(EditorCamera::default());
@@ -53,7 +78,7 @@ fn main() -> Result<(), notify::Error> {
         let running = !state.window.should_close;
 
         if receiver.try_recv().is_ok() {
-            world.load_entities(helpers::load_scene("scene_1.ron"));
+            world.load_entities(helpers::load_scene("scene_1.ron", &mut state));
         }
 
         world.run(&mut state);
