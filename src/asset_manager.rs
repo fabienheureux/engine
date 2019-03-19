@@ -17,6 +17,7 @@ type GlId = Option<u32>;
 pub enum Ressource {
     Texture(Texture),
 }
+
 impl Ressource {
     pub fn get_raw<T: Any>(&self) -> &T {
         use Ressource::*;
@@ -25,18 +26,6 @@ impl Ressource {
             Texture(value) => {
                 let any = value as &dyn Any;
                 any.downcast_ref::<T>().expect("Not found")
-            }
-        }
-    }
-
-    #[allow(unused)]
-    pub fn get_mut_raw<T: Any>(&mut self) -> &mut T {
-        use Ressource::*;
-
-        match self {
-            Texture(value) => {
-                let any = value as &mut dyn Any;
-                any.downcast_mut::<T>().expect("Not found")
             }
         }
     }
@@ -64,8 +53,7 @@ impl Asset {
 
 #[derive(Default)]
 pub struct AssetStorage {
-    pub textures: Vec<Ressource>,
-    pub shaders: Vec<Ressource>,
+    pub data: Vec<Ressource>,
 }
 
 #[derive(Default)]
@@ -83,7 +71,7 @@ impl AssetManager {
             let texture = Self::memory_load(texture_path.as_str());
             let (width, height) = texture.dimensions();
 
-            let indice = self.storage.textures.len();
+            let indice = self.storage.data.len();
 
             let texture = Ressource::Texture(Texture {
                 raw: texture.to_rgba().into_raw(),
@@ -91,7 +79,7 @@ impl AssetManager {
                 height: height as i32,
             });
 
-            self.storage.textures.insert(indice, texture);
+            self.storage.data.insert(indice, texture);
 
             self.assets.insert(key.clone(), Asset::new(indice, None));
         }
@@ -118,7 +106,7 @@ impl AssetManager {
         let indice = asset.indice;
 
         self.storage
-            .textures
+            .data
             .get(indice)
             .expect("Texture not found in storage.")
             .get_raw::<T>()
@@ -128,7 +116,7 @@ impl AssetManager {
     pub fn remove_texture(&mut self, name: &str) {
         let asset = self.assets.get(name).expect("Asset not found.");
 
-        self.storage.textures.remove(asset.indice);
+        self.storage.data.remove(asset.indice);
 
         self.assets
             .remove(name)
