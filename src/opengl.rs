@@ -295,8 +295,10 @@ impl OpenGL {
         (vao, false)
     }
 
-    // Only rgba image.
-    pub fn load_2d_texture(width: i32, height: i32, image: Vec<u8>) -> u32 {
+    /// This method can load the attached texture into the memory and give it
+    /// to the GPU.
+    /// Works only for RGBA textures.
+    pub fn load_2d_texture(width: i32, height: i32, image: &Vec<u8>) -> u32 {
         let mut id: u32 = 0;
 
         unsafe {
@@ -328,11 +330,11 @@ impl OpenGL {
             gl::TexImage2D(
                 gl::TEXTURE_2D,
                 0,
-                gl::RGB as i32,
+                gl::RGBA as i32,
                 width,
                 height,
                 0,
-                gl::RGB,
+                gl::RGBA,
                 gl::UNSIGNED_BYTE,
                 image.as_ptr() as *const c_void,
             );

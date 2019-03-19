@@ -1,51 +1,53 @@
-use crate::{constants::TEXTURE_PATH, opengl::OpenGL, shader::Shader};
+use crate::{constants::TEXTURE_PATH, opengl::OpenGL};
 use image;
 use image::GenericImageView;
 use std::collections::HashMap;
 use std::path::Path;
 
-// Index of the asset in the storage Vec.
+/// Index of the asset in the storage.
 type Indice = usize;
-// This is used by opengl.
-// If None, this asset is currently not loaded into the renderer.
+
+/// This is used by opengl.
+/// If None, this asset is currently not yet send into the GPU.
 type GlId = Option<u32>;
 
-// Each type has his own Vec storage.
-#[derive(Debug)]
-pub enum StorageType {
-    Texture,
-    // Audio, Mesh, ...
+/// This enum store is a "super type" over possible
+/// storage types.
+pub enum Ressource {
+    Texture(Texture),
+}
+impl Ressource {
+    pub fn get_texture(&self) -> &Texture {
+        match self {
+            Ressource::Texture(i) => i,
+        }
+    }
 }
 
 #[derive(Debug)]
 pub struct Asset {
     pub indice: Indice,
-    pub kind: StorageType,
     pub gl_id: GlId,
 }
 
 // All image are converted in rgba.
 #[derive(Debug)]
-pub struct Image {
+pub struct Texture {
     raw: Vec<u8>,
     width: i32,
     height: i32,
 }
 
 impl Asset {
-    pub fn new(indice: Indice, kind: StorageType, gl_id: GlId) -> Self {
-        Self {
-            indice,
-            kind,
-            gl_id,
-        }
+    pub fn new(indice: Indice, gl_id: GlId) -> Self {
+        Self { indice, gl_id }
     }
 }
 
 #[derive(Default)]
 pub struct AssetStorage {
-    pub textures: Vec<Image>,
-    pub shaders: Vec<Shader>,
+    pub textures: Vec<Ressource>,
+    pub shaders: Vec<Ressource>,
 }
 
 #[derive(Default)]
@@ -64,16 +66,16 @@ impl AssetManager {
             let (width, height) = texture.dimensions();
 
             let indice = self.storage.textures.len();
-            self.storage.textures.insert(indice, Image{
+
+            let texture = Ressource::Texture(Texture {
                 raw: texture.to_rgba().into_raw(),
-                width: width as i32, 
-                height: height as i32, 
+                width: width as i32,
+                height: height as i32,
             });
 
-            self.assets.insert(
-                key.clone(),
-                Asset::new(indice, StorageType::Texture, None),
-            );
+            self.storage.textures.insert(indice, texture);
+
+            self.assets.insert(key.clone(), Asset::new(indice, None));
         }
 
         return key;
@@ -87,6 +89,22 @@ impl AssetManager {
         self.assets.get(name).expect("Asset not found.")
     }
 
+    pub fn get(&self, name: &str) -> (&Asset, &Ressource) {
+        let asset = self.get_asset(name);
+        let ressources = self.get_ressource(asset);
+
+        (asset, ressources)
+    }
+
+    pub fn get_ressource(&self, asset: &Asset) -> &Ressource {
+        let indice = asset.indice;
+
+        self.storage
+            .textures
+            .get(indice)
+            .expect("Texture not found in storage.")
+    }
+
     #[allow(unused)]
     pub fn remove_texture(&mut self, name: &str) {
         let asset = self.assets.get(name).expect("Asset not found.");
@@ -98,32 +116,24 @@ impl AssetManager {
             .expect("Error when removing texture from AssetManager");
     }
 
-    /// This method can load the attached texture into the memory and give it
-    /// to the GPU.
-    /// For now, there are some openGL config stuff.
+    /// Send the texture into the renderer.
     pub fn gl_load(&mut self, name: &str) {
-        let asset = self.get_asset(name);
+        let (asset, ressource) = self.get(name);
+        let texture = ressource.get_texture();
 
         // We want to sent the texture only once into the GPU.
         if asset.gl_id.is_some() {
             return;
         }
 
-        let indice = asset.indice;
-
-        let image = self
-            .storage
-            .textures
-            .get(indice)
-            .expect("Texture not found in storage.");
-
+        // This id is used to activate the texture in the renderer system.
         let id = OpenGL::load_2d_texture(
-            image.width,
-            image.height, 
-            image.raw.clone(),
+            texture.width,
+            texture.height,
+            &texture.raw,
         );
 
-        // Bind the gl id to the asset.
+        // Bind the id to the asset object, to be retrieved later.
         let asset = self.get_mut_asset(name);
         asset.gl_id = Some(id);
     }
