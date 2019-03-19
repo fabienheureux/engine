@@ -1,6 +1,7 @@
 use crate::{constants::TEXTURE_PATH, opengl::OpenGL};
 use image;
 use image::GenericImageView;
+use std::any::Any;
 use std::collections::HashMap;
 use std::path::Path;
 
@@ -17,9 +18,26 @@ pub enum Ressource {
     Texture(Texture),
 }
 impl Ressource {
-    pub fn get_texture(&self) -> &Texture {
+    pub fn get_raw<T: Any>(&self) -> &T {
+        use Ressource::*;
+
         match self {
-            Ressource::Texture(i) => i,
+            Texture(value) => {
+                let any = value as &dyn Any;
+                any.downcast_ref::<T>().expect("Not found")
+            }
+        }
+    }
+
+    #[allow(unused)]
+    pub fn get_mut_raw<T: Any>(&mut self) -> &mut T {
+        use Ressource::*;
+
+        match self {
+            Texture(value) => {
+                let any = value as &mut dyn Any;
+                any.downcast_mut::<T>().expect("Not found")
+            }
         }
     }
 }
@@ -89,20 +107,21 @@ impl AssetManager {
         self.assets.get(name).expect("Asset not found.")
     }
 
-    pub fn get(&self, name: &str) -> (&Asset, &Ressource) {
+    pub fn get<T: 'static>(&self, name: &str) -> (&Asset, &T) {
         let asset = self.get_asset(name);
-        let ressources = self.get_ressource(asset);
+        let ressources = self.get_ressource::<T>(asset);
 
         (asset, ressources)
     }
 
-    pub fn get_ressource(&self, asset: &Asset) -> &Ressource {
+    pub fn get_ressource<T: 'static>(&self, asset: &Asset) -> &T {
         let indice = asset.indice;
 
         self.storage
             .textures
             .get(indice)
             .expect("Texture not found in storage.")
+            .get_raw::<T>()
     }
 
     #[allow(unused)]
@@ -118,8 +137,7 @@ impl AssetManager {
 
     /// Send the texture into the renderer.
     pub fn gl_load(&mut self, name: &str) {
-        let (asset, ressource) = self.get(name);
-        let texture = ressource.get_texture();
+        let (asset, texture) = self.get::<Texture>(name);
 
         // We want to sent the texture only once into the GPU.
         if asset.gl_id.is_some() {
