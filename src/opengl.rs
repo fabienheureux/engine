@@ -295,6 +295,7 @@ impl OpenGL {
         (vao, false)
     }
 
+    // Only rgba image.
     pub fn load_2d_texture(width: i32, height: i32, image: Vec<u8>) -> u32 {
         let mut id: u32 = 0;
 

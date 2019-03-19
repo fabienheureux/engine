@@ -1,5 +1,6 @@
-use crate::{constants::TEXTURE_PATH, opengl::OpenGL};
+use crate::{constants::TEXTURE_PATH, opengl::OpenGL, shader::Shader};
 use image;
+use image::GenericImageView;
 use std::collections::HashMap;
 use std::path::Path;
 
@@ -23,6 +24,14 @@ pub struct Asset {
     pub gl_id: GlId,
 }
 
+// All image are converted in rgba.
+#[derive(Debug)]
+pub struct Image {
+    raw: Vec<u8>,
+    width: i32,
+    height: i32,
+}
+
 impl Asset {
     pub fn new(indice: Indice, kind: StorageType, gl_id: GlId) -> Self {
         Self {
@@ -35,7 +44,8 @@ impl Asset {
 
 #[derive(Default)]
 pub struct AssetStorage {
-    pub textures: Vec<image::RgbImage>,
+    pub textures: Vec<Image>,
+    pub shaders: Vec<Shader>,
 }
 
 #[derive(Default)]
@@ -50,10 +60,15 @@ impl AssetManager {
 
         if !self.assets.contains_key(path) {
             let texture_path = String::from([TEXTURE_PATH, path].join(""));
-            let texture = Self::memory_load(texture_path.as_str()).to_rgb();
+            let texture = Self::memory_load(texture_path.as_str());
+            let (width, height) = texture.dimensions();
 
             let indice = self.storage.textures.len();
-            self.storage.textures.insert(indice, texture);
+            self.storage.textures.insert(indice, Image{
+                raw: texture.to_rgba().into_raw(),
+                width: width as i32, 
+                height: height as i32, 
+            });
 
             self.assets.insert(
                 key.clone(),
@@ -103,9 +118,9 @@ impl AssetManager {
             .expect("Texture not found in storage.");
 
         let id = OpenGL::load_2d_texture(
-            image.width() as i32,
-            image.height() as i32,
-            image.clone().into_raw(),
+            image.width,
+            image.height, 
+            image.raw.clone(),
         );
 
         // Bind the gl id to the asset.
