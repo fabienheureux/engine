@@ -9,6 +9,7 @@ pub enum Primitives {
 #[derive(Debug)]
 pub struct Mesh {
     pub vao: u32,
+    pub lines: i32,
     pub has_ebo: bool,
     pub texture: Option<String>,
     pub shader: Shader,
@@ -22,18 +23,19 @@ impl Mesh {
         (vert, frag): (&str, &str),
     ) -> Self {
         let shader = Mesh::set_shader(vert, frag);
-        let (vao, has_ebo) = Mesh::get_gl_info(prim);
+        let (vao, lines, has_ebo) = Mesh::get_gl_info(prim);
 
         Self {
             shader,
             vao,
+            lines,
             has_ebo,
             texture,
             ..Self::default()
         }
     }
 
-    pub fn get_gl_info(prim: Primitives) -> (u32, bool) {
+    pub fn get_gl_info(prim: Primitives) -> (u32, i32, bool) {
         match prim {
             Primitives::Plane => OpenGL::gen_plane(),
             Primitives::Cube => OpenGL::gen_cube(),
@@ -66,12 +68,13 @@ impl Mesh {
 // with only a color.
 impl Default for Mesh {
     fn default() -> Self {
-        let (vao, has_ebo) = OpenGL::gen_cube();
+        let (vao, lines, has_ebo) = OpenGL::gen_cube();
         let shader = Shader::new().with_vert("default").with_frag("default");
 
         Self {
             vao,
             has_ebo,
+            lines,
             texture: None,
             shader,
             color: (1., 1., 1.),

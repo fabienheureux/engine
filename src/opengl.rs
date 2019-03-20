@@ -163,16 +163,24 @@ impl OpenGL {
 
     // Create a little plane.
     // Return vao and texture id and positions.
-    pub fn gen_plane() -> (u32, bool) {
-        let vertices: [f32; 20] = [
-            0.5, 0.5, 0., 1., 1., 0.5, -0.5, 0., 1., 0., -0.5, -0.5, 0., 0.,
-            0., -0.5, 0.5, 0., 0., 1.,
+    pub fn gen_plane() -> (u32, i32, bool) {
+
+        #[cfg_attr(rustfmt, rustfmt_skip)]
+        let vertices: [f32; 48] = [
+            // vertex, tex, normal.
+            -1., 0., 1., 0., 5., 0., 1., 0.,
+            1., 0., -1., 5., 0.,0., 1., 0.,
+            1., 0., 1., 5., 5., 0., 1., 0.,
+            -1., 0., 1., 0., 5.,0., 1., 0.,
+            -1., 0., -1., 0., 0.,0., 1., 0.,
+            1., 0., -1., 5., 0.,0., 1., 0.,
         ];
-        let indices: [i32; 6] = [0, 1, 3, 1, 2, 3];
+
+        // let indices: [i32; 6] = [0, 1, 3, 1, 2, 3];
 
         let vao = OpenGL::gen_vao();
         let vbo = OpenGL::gen_buffer();
-        let ebo = OpenGL::gen_buffer();
+        // let ebo = OpenGL::gen_buffer();
 
         unsafe {
             gl::BindVertexArray(vao);
@@ -185,20 +193,22 @@ impl OpenGL {
                 gl::STATIC_DRAW,
             );
 
-            gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, ebo);
-            gl::BufferData(
-                gl::ELEMENT_ARRAY_BUFFER,
-                (indices.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
-                &indices[0] as *const i32 as *const c_void,
-                gl::STATIC_DRAW,
-            );
+            // gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, ebo);
+            // gl::BufferData(
+            //     gl::ELEMENT_ARRAY_BUFFER,
+            //     (indices.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
+            //     &indices[0] as *const i32 as *const c_void,
+            //     gl::STATIC_DRAW,
+            // );
+
+            let stride = 8 * mem::size_of::<GLfloat>() as GLsizei;
 
             gl::VertexAttribPointer(
                 0,
                 3,
                 gl::FLOAT,
                 gl::FALSE,
-                5 * mem::size_of::<GLfloat>() as GLsizei,
+                stride,
                 ptr::null(),
             );
             gl::EnableVertexAttribArray(0);
@@ -208,18 +218,28 @@ impl OpenGL {
                 2,
                 gl::FLOAT,
                 gl::FALSE,
-                5 * mem::size_of::<GLfloat>() as GLsizei,
+                stride,
                 (3 * mem::size_of::<GLfloat>()) as *const c_void,
             );
             gl::EnableVertexAttribArray(1);
+
+            gl::VertexAttribPointer(
+                2,
+                3,
+                gl::FLOAT,
+                gl::FALSE,
+                8 * mem::size_of::<GLfloat>() as GLsizei,
+                (5 * mem::size_of::<GLfloat>()) as *const c_void,
+            );
+            gl::EnableVertexAttribArray(2);
         }
 
-        (vao, true)
+        (vao, 6, false)
     }
 
     // Create a little cube
     // Return vao and texture id and positions.
-    pub fn gen_cube() -> (u32, bool) {
+    pub fn gen_cube() -> (u32, i32, bool) {
         // position + text coord + normal
         let vertices: [f32; 288] = [
             -0.5, -0.5, -0.5, 0.0, 0.0, 0., 0., -1., 0.5, -0.5, -0.5, 1.0, 0.0,
@@ -292,7 +312,7 @@ impl OpenGL {
             gl::EnableVertexAttribArray(2);
         }
 
-        (vao, false)
+        (vao, 36, false)
     }
 
     /// This method can load the attached texture into the memory and give it

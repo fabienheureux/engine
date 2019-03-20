@@ -50,9 +50,9 @@ impl System for Renderer {
         }
 
         if mesh.has_ebo {
-            OpenGL::draw_with_ebo(vao, texture, 6);
+            OpenGL::draw_with_ebo(vao, texture, mesh.lines);
         } else {
-            OpenGL::draw(vao, texture, 36);
+            OpenGL::draw(vao, texture, mesh.lines);
         }
     }
 }

@@ -19,7 +19,7 @@
    Light(
      ubo_index: 0,
      kind: Directional,
-     direction: [0., 1., 0.],
+     direction: [0., 0., 1.],
      ambient: [0.2, 0.2, 0.2],
      diffuse: [0.5, 0.5, 0.5],
      specular: [1., 1., 1.],
@@ -54,11 +54,11 @@
  Plane(
      5,
      Transform(
-       position: [0., -2., 0.],
+       position: [0., -0.5, 0.],
        rotate: [0., 0., 0.],
-       scale: [1., 1., 1.],
+       scale: [5., 5., 5.],
        ),
-     "pos_debug.png",
+     "grid_debug.png",
      )
  ]
  )
