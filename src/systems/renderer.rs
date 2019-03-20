@@ -3,6 +3,7 @@ use crate::{
     components::{Light, Mesh, Transform},
     ecs::{Entity, System, World},
     opengl::OpenGL,
+    shader::Shader,
 };
 use nalgebra_glm as glm;
 use std::any::TypeId;
@@ -26,7 +27,7 @@ impl System for Renderer {
         model = glm::scale(&model, &transform.scale);
 
         let vao = mesh.get_vao();
-        let shader = mesh.get_shader();
+        let (_, shader) = state.asset_manager.get::<Shader>(mesh.shader);
         let texture_key = mesh.get_texture();
 
         OpenGL::use_shader(shader.id);

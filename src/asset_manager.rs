@@ -1,4 +1,4 @@
-use crate::{constants::TEXTURE_PATH, opengl::OpenGL};
+use crate::{constants::TEXTURE_PATH, opengl::OpenGL, shader::Shader};
 use image;
 use image::GenericImageView;
 use std::any::Any;
@@ -16,6 +16,7 @@ type GlId = Option<u32>;
 /// storage types.
 pub enum Ressource {
     Texture(Texture),
+    Shader(Shader),
 }
 
 impl Ressource {
@@ -26,6 +27,25 @@ impl Ressource {
             Texture(value) => {
                 let any = value as &dyn Any;
                 any.downcast_ref::<T>().expect("Not found")
+            }
+            Shader(value) => {
+                let any = value as &dyn Any;
+                any.downcast_ref::<T>().expect("Not found")
+            }
+        }
+    }
+
+    pub fn is_type<T: Any>(&self) -> bool {
+        use Ressource::*;
+
+        match self {
+            Texture(value) => {
+                let any = value as &dyn Any;
+                any.is::<T>()
+            }
+            Shader(value) => {
+                let any = value as &dyn Any;
+                any.is::<T>()
             }
         }
     }
@@ -84,7 +104,23 @@ impl AssetManager {
             self.assets.insert(key.clone(), Asset::new(indice, None));
         }
 
-        return key;
+        key
+    }
+
+    pub fn add_shader(&mut self, name: &str, vert: &str, frag: &str) -> String {
+        let key = String::from(name);
+
+        if !self.assets.contains_key(name) {
+            let shader = Ressource::Shader(
+                Shader::new().with_vert(vert).with_frag(frag),
+            );
+            let indice = self.storage.data.len();
+
+            self.storage.data.insert(indice, shader);
+            self.assets.insert(key.clone(), Asset::new(indice, None));
+        }
+
+        key
     }
 
     pub fn get_mut_asset(&mut self, name: &str) -> &mut Asset {
@@ -102,6 +138,15 @@ impl AssetManager {
         (asset, ressources)
     }
 
+    pub fn get_ressources<T: 'static>(&self) -> Vec<&T> {
+        self.storage
+            .data
+            .iter()
+            .filter(|d| d.is_type::<T>())
+            .map(|d| d.get_raw::<T>())
+            .collect::<Vec<_>>()
+    }
+
     pub fn get_ressource<T: 'static>(&self, asset: &Asset) -> &T {
         let indice = asset.indice;
 
@@ -113,7 +158,7 @@ impl AssetManager {
     }
 
     #[allow(unused)]
-    pub fn remove_texture(&mut self, name: &str) {
+    pub fn remove(&mut self, name: &str) {
         let asset = self.assets.get(name).expect("Asset not found.");
 
         self.storage.data.remove(asset.indice);

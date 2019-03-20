@@ -1,5 +1,6 @@
 use crate::{
     asset_manager::AssetManager,
+    shader::Shader,
     constants::{SCREEN_HEIGHT, SCREEN_WIDTH},
     opengl::OpenGL,
     time::Time,
@@ -31,13 +32,27 @@ impl GameState {
 
         let lights_ubo = OpenGL::create_lights_ubo(1);
 
+        let mut asset_manager = AssetManager::default();
+
+        asset_manager.add_shader("default", "default", "default");
+        asset_manager.add_shader("default_material", "default_material", "default_material");
+        asset_manager.add_shader("light", "default", "default");
+        asset_manager.add_shader("outline", "default_material", "outline");
+
+        let shaders = asset_manager.get_ressources::<Shader>();
+
+        shaders.iter().for_each(|shader| {
+            OpenGL::set_uniform_block(shader.id, 0, "Camera");
+            OpenGL::set_uniform_block(shader.id, 1, "Lights");
+        });
+
         Self {
             window,
             time: Time::default(),
             editor_mode: true,
             camera_ubo,
             lights_ubo,
-            asset_manager: AssetManager::default(),
+            asset_manager,
         }
     }
 }

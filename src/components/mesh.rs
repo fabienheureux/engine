@@ -1,4 +1,4 @@
-use crate::{opengl::OpenGL, shader::Shader};
+use crate::opengl::OpenGL;
 use std::default::Default;
 
 pub enum Primitives {
@@ -7,22 +7,21 @@ pub enum Primitives {
 }
 
 #[derive(Debug)]
-pub struct Mesh {
+pub struct Mesh<'a> {
     pub vao: u32,
     pub lines: i32,
     pub has_ebo: bool,
     pub texture: Option<String>,
-    pub shader: Shader,
+    pub shader: &'a str,
     pub color: (f32, f32, f32),
 }
 
-impl Mesh {
+impl<'a> Mesh<'a> {
     pub fn new(
         prim: Primitives,
         texture: Option<String>,
-        (vert, frag): (&str, &str),
+        shader: &'a str,
     ) -> Self {
-        let shader = Mesh::set_shader(vert, frag);
         let (vao, lines, has_ebo) = Mesh::get_gl_info(prim);
 
         Self {
@@ -42,19 +41,6 @@ impl Mesh {
         }
     }
 
-    pub fn set_shader(vert: &str, frag: &str) -> Shader {
-        let shader = Shader::new().with_vert(vert).with_frag(frag);
-
-        OpenGL::set_uniform_block(shader.id, 0, "Camera");
-        OpenGL::set_uniform_block(shader.id, 1, "Lights");
-
-        shader
-    }
-
-    pub fn get_shader(&self) -> &Shader {
-        &self.shader
-    }
-
     pub fn get_vao(&self) -> u32 {
         self.vao
     }
@@ -66,10 +52,10 @@ impl Mesh {
 
 // The default function will create a simple cube mesh without
 // with only a color.
-impl Default for Mesh {
+impl<'a> Default for Mesh<'a> {
     fn default() -> Self {
         let (vao, lines, has_ebo) = OpenGL::gen_cube();
-        let shader = Shader::new().with_vert("default").with_frag("default");
+        let shader = "default";
 
         Self {
             vao,

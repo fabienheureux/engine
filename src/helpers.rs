@@ -36,7 +36,7 @@ pub fn load_scene(path: &str, state: &mut GameState) -> Vec<Entity> {
     for item in model.items.into_iter() {
         match item {
             Elements::LightSource(id, transform, mut light) => {
-                let mesh = Mesh::default();
+                let mesh = Mesh::new(Primitives::Cube, None, "light");
                 light.set_ubo();
 
                 let entity = Entity::from_file(id)
@@ -55,11 +55,8 @@ pub fn load_scene(path: &str, state: &mut GameState) -> Vec<Entity> {
                     asset_manager.gl_load(texture);
                 }
 
-                let mesh = Mesh::new(
-                    Primitives::Cube,
-                    opt_tex,
-                    ("default_material", "default_material"),
-                );
+                let mesh =
+                    Mesh::new(Primitives::Cube, opt_tex, "default_material");
 
                 let entity = Entity::from_file(id)
                     .with::<Transform>(transform)
@@ -76,11 +73,8 @@ pub fn load_scene(path: &str, state: &mut GameState) -> Vec<Entity> {
                     asset_manager.gl_load(texture);
                 }
 
-                let mesh = Mesh::new(
-                    Primitives::Plane,
-                    opt_tex,
-                    ("default_material", "default_material"),
-                );
+                let mesh =
+                    Mesh::new(Primitives::Plane, opt_tex, "default_material");
 
                 let entity = Entity::from_file(id)
                     .with::<Transform>(transform)
