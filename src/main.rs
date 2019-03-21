@@ -38,6 +38,7 @@ mod time;
 mod window;
 
 use crate::{
+    shader::Shader,
     constants::SCENE_PATH,
     ecs::World,
     editor::Editor,
@@ -69,8 +70,13 @@ fn main() -> Result<(), notify::Error> {
     watcher.watch(SCENE_PATH, RecursiveMode::NonRecursive)?;
 
     game_loop.start(|time| {
-        OpenGL::clear();
         Editor::run(&mut state);
+        // First render pass. 
+        // We render to the scene fbo.
+        let (fbo, tex) = state.scene_fbo;
+        OpenGL::use_fbo(fbo);
+        OpenGL::set_depth_buffer(true);
+        OpenGL::clear_color((0., 0., 0.));
 
         state.window.capture();
         state.time = time.clone();
@@ -82,6 +88,18 @@ fn main() -> Result<(), notify::Error> {
         }
 
         world.run(&mut state);
+
+        // Final render pass with no post processing.
+        // with the default framebuffer.
+        OpenGL::use_fbo(0);
+        OpenGL::clear_color((1., 1., 1.));
+
+        let (_, shader) = state.asset_manager.get::<Shader>("screen_output");
+        OpenGL::set_depth_buffer(false);
+        OpenGL::use_shader(shader.id);
+        shader.set_int("screen", 0);
+
+        OpenGL::draw(state.screen_vao, Some(tex), 6);
 
         state.window.swap_gl();
         running

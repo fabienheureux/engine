@@ -1,3 +1,4 @@
+use crate::constants::{SCREEN_HEIGHT, SCREEN_WIDTH};
 use gl;
 use gl::types::{GLfloat, GLsizei, GLsizeiptr};
 use glutin::{GlContext, GlWindow};
@@ -20,8 +21,9 @@ impl OpenGL {
                 gl_window.get_proc_address(symbol) as *const _
             });
 
-            gl::Enable(gl::DEPTH_TEST);
+            OpenGL::set_depth_buffer(true);
             gl::Enable(gl::STENCIL_TEST);
+            // Specify the default color.
             gl::ClearColor(0.0, 0.0, 0.0, 0.0);
         }
     }
@@ -46,6 +48,94 @@ impl OpenGL {
         let mut id = 0;
         unsafe { gl::GenBuffers(1, &mut id) }
         id
+    }
+
+    pub fn gen_fbo() -> u32 {
+        let mut fbo = 0;
+        unsafe {
+            gl::GenFramebuffers(1, &mut fbo);
+        }
+        fbo
+    }
+
+    pub fn use_fbo(fbo: u32) {
+        unsafe {
+            gl::BindFramebuffer(gl::FRAMEBUFFER, fbo);
+        }
+    }
+
+    pub fn create_fbo() -> (u32, u32) {
+        let fbo = Self::gen_fbo();
+        let mut cbo = 1;
+
+        let retina_factor = 2;
+
+        unsafe {
+            OpenGL::use_fbo(fbo);
+
+            // Generate color attachment.
+            gl::GenTextures(1, &mut cbo);
+
+            gl::BindTexture(gl::TEXTURE_2D, cbo);
+            gl::TexParameteri(
+                gl::TEXTURE_2D,
+                gl::TEXTURE_MIN_FILTER,
+                gl::LINEAR as i32,
+            );
+            gl::TexParameteri(
+                gl::TEXTURE_2D,
+                gl::TEXTURE_MAG_FILTER,
+                gl::LINEAR as i32,
+            );
+
+            gl::TexImage2D(
+                gl::TEXTURE_2D,
+                0,
+                gl::RGB as i32,
+                SCREEN_WIDTH as i32 * retina_factor,
+                SCREEN_HEIGHT as i32 * retina_factor,
+                0,
+                gl::RGB,
+                gl::UNSIGNED_BYTE,
+                ptr::null(),
+            );
+            gl::BindTexture(gl::TEXTURE_2D, 0);
+
+            // Attach the texture to the fbo.
+            gl::FramebufferTexture2D(
+                gl::FRAMEBUFFER,
+                gl::COLOR_ATTACHMENT0,
+                gl::TEXTURE_2D,
+                cbo,
+                0,
+            );
+
+            let mut rbo = 0;
+            gl::GenRenderbuffers(1, &mut rbo);
+            gl::BindRenderbuffer(gl::RENDERBUFFER, rbo);
+            gl::RenderbufferStorage(
+                gl::RENDERBUFFER,
+                gl::DEPTH24_STENCIL8,
+                SCREEN_WIDTH as i32 * retina_factor,
+                SCREEN_HEIGHT as i32 * retina_factor,
+            );
+            gl::FramebufferRenderbuffer(
+                gl::FRAMEBUFFER,
+                gl::DEPTH_STENCIL_ATTACHMENT,
+                gl::RENDERBUFFER,
+                rbo,
+            );
+
+            if gl::CheckFramebufferStatus(gl::FRAMEBUFFER)
+                != gl::FRAMEBUFFER_COMPLETE
+            {
+                panic!("fbo not completed");
+            }
+
+            OpenGL::use_fbo(0);
+        }
+
+        (fbo, cbo)
     }
 
     pub fn create_camera_ubo(binding_point: u32) -> u32 {
@@ -149,6 +239,16 @@ impl OpenGL {
         }
     }
 
+    pub fn set_depth_buffer(enabled: bool) {
+        unsafe {
+            if enabled {
+                gl::Enable(gl::DEPTH_TEST);
+            } else {
+                gl::Disable(gl::DEPTH_TEST);
+            }
+        }
+    }
+
     pub fn clear() {
         unsafe {
             // Clear color buffer with the color specified by gl::ClearColor.
@@ -160,11 +260,70 @@ impl OpenGL {
             );
         }
     }
+    pub fn clear_color((r, g, b): (f32, f32, f32)) {
+        unsafe {
+            // Clear color buffer with specified color.
+            gl::ClearColor(r, g, b, 1.);
+            Self::clear();
+        }
+    }
+
+    pub fn gen_screen_quad() -> u32 {
+        #[cfg_attr(rustfmt, rustfmt_skip)]
+        let vertices: [f32; 24] = [
+            // vertex, text coord.
+            -1.0,  1.0, 0.0, 1.0,
+            -1.0, -1.0, 0.0, 0.0,
+            1.0, -1.0, 1.0, 0.0,
+
+            -1.0,  1.0, 0.0, 1.0,
+            1.0, -1.0, 1.0, 0.0,
+            1.0,  1.0, 1.0, 1.0
+        ];
+
+        let vao = OpenGL::gen_vao();
+        let vbo = OpenGL::gen_buffer();
+
+        unsafe {
+            gl::BindVertexArray(vao);
+
+            gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
+            gl::BufferData(
+                gl::ARRAY_BUFFER,
+                (vertices.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
+                &vertices[0] as *const f32 as *const c_void,
+                gl::STATIC_DRAW,
+            );
+
+            let stride = 4 * mem::size_of::<GLfloat>() as GLsizei;
+
+            gl::VertexAttribPointer(
+                0,
+                2,
+                gl::FLOAT,
+                gl::FALSE,
+                stride,
+                ptr::null(),
+            );
+            gl::EnableVertexAttribArray(0);
+
+            gl::VertexAttribPointer(
+                1,
+                2,
+                gl::FLOAT,
+                gl::FALSE,
+                stride,
+                (2 * mem::size_of::<GLfloat>()) as *const c_void,
+            );
+            gl::EnableVertexAttribArray(1);
+        }
+
+        vao
+    }
 
     // Create a little plane.
     // Return vao and texture id and positions.
     pub fn gen_plane() -> (u32, i32, bool) {
-
         #[cfg_attr(rustfmt, rustfmt_skip)]
         let vertices: [f32; 48] = [
             // vertex, tex, normal.
@@ -371,12 +530,13 @@ impl OpenGL {
 
     pub fn draw_with_ebo(vao: u32, texture: Option<u32>, triangles: i32) {
         unsafe {
+            gl::BindVertexArray(vao);
+
             if let Some(texture_id) = texture {
                 gl::ActiveTexture(gl::TEXTURE0);
                 gl::BindTexture(gl::TEXTURE_2D, texture_id);
             };
 
-            gl::BindVertexArray(vao);
             gl::DrawElements(
                 gl::TRIANGLES,
                 triangles,
@@ -391,12 +551,13 @@ impl OpenGL {
 
     pub fn draw(vao: u32, texture: Option<u32>, triangles: i32) {
         unsafe {
+            gl::BindVertexArray(vao);
+
             if let Some(texture_id) = texture {
                 gl::ActiveTexture(gl::TEXTURE0);
                 gl::BindTexture(gl::TEXTURE_2D, texture_id);
             };
 
-            gl::BindVertexArray(vao);
             gl::DrawArrays(gl::TRIANGLES, 0, triangles);
 
             // Cleanup

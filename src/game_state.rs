@@ -15,6 +15,9 @@ pub struct GameState {
     pub lights_ubo: u32,
     pub editor_mode: bool,
     pub asset_manager: AssetManager,
+
+    pub screen_vao: u32,
+    pub scene_fbo: (u32, u32),
 }
 
 impl GameState {
@@ -38,6 +41,8 @@ impl GameState {
         asset_manager.add_shader("default_material", "default_material", "default_material");
         asset_manager.add_shader("light", "default", "default");
         asset_manager.add_shader("outline", "default_material", "outline");
+        // TODO: Should rename those shaders.
+        asset_manager.add_shader("screen_output", "quad", "quad");
 
         let shaders = asset_manager.get_ressources::<Shader>();
 
@@ -46,6 +51,9 @@ impl GameState {
             OpenGL::set_uniform_block(shader.id, 1, "Lights");
         });
 
+        let screen_vao = OpenGL::gen_screen_quad();
+        let scene_fbo = OpenGL::create_fbo();
+
         Self {
             window,
             time: Time::default(),
@@ -53,6 +61,8 @@ impl GameState {
             camera_ubo,
             lights_ubo,
             asset_manager,
+            screen_vao,
+            scene_fbo,
         }
     }
 }
