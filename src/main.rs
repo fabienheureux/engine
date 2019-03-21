@@ -44,7 +44,7 @@ use crate::{
     game_loop::GameLoop,
     game_state::GameState,
     opengl::OpenGL,
-    systems::{EditorCamera, Renderer},
+    systems::{EditorCamera, Renderer, Selectable},
 };
 use notify::{RecommendedWatcher, RecursiveMode, Watcher};
 use std::sync::mpsc::channel;
@@ -58,9 +58,12 @@ fn main() -> Result<(), notify::Error> {
     // Load scene for the first time.
     world.load_entities(helpers::load_scene("scene_1.ron", &mut state));
 
-    // Add systems
+    // Register systems to the world. 
     world.add_system(EditorCamera::default());
+    // Main render pass.
     world.add_system(Renderer::default());
+    // Next render path...
+    world.add_system(Selectable::default());
 
     // Watch the ressources folder every 2 secs.
     let (sender, receiver) = channel();

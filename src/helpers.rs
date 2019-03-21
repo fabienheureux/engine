@@ -1,5 +1,5 @@
 use crate::{
-    components::{Camera, Light, Mesh, Primitives, Transform},
+    components::{Camera, Light, Mesh, Primitives, Transform, Outline},
     constants::SCENE_PATH,
     ecs::Entity,
     game_state::GameState,
@@ -60,6 +60,7 @@ pub fn load_scene(path: &str, state: &mut GameState) -> Vec<Entity> {
 
                 let entity = Entity::from_file(id)
                     .with::<Transform>(transform)
+                    .with::<Outline>(Outline::default())
                     .with::<Mesh>(mesh);
 
                 entities.push(entity);

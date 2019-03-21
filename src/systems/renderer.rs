@@ -27,10 +27,23 @@ impl System for Renderer {
         model = glm::scale(&model, &transform.scale);
 
         let vao = mesh.get_vao();
-        let (_, shader) = state.asset_manager.get::<Shader>(mesh.shader);
+        let shader = state.asset_manager.get_one::<Shader>(mesh.shader);
         let texture_key = mesh.get_texture();
 
         OpenGL::use_shader(shader.id);
+
+        if mesh.lines != 6 {
+            unsafe {
+                gl::StencilFunc(gl::ALWAYS, 1, 0xFF);
+                gl::StencilMask(0xFF);
+            }
+        } else {
+            // Is plane...
+            unsafe { 
+                gl::StencilMask(0x00);
+            
+            }
+        }
 
         shader.set_matrix4("model", glm::value_ptr(&model));
 

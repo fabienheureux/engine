@@ -138,6 +138,11 @@ impl AssetManager {
         (asset, ressources)
     }
 
+    pub fn get_one<T: 'static>(&self, name: &str) ->  &T {
+        let asset = self.get_asset(name);
+        self.get_ressource::<T>(asset)
+    }
+
     pub fn get_ressources<T: 'static>(&self) -> Vec<&T> {
         self.storage
             .data

@@ -22,6 +22,11 @@ impl OpenGL {
 
             gl::Enable(gl::DEPTH_TEST);
             gl::Enable(gl::STENCIL_TEST);
+
+            gl::DepthFunc(gl::LESS);
+            gl::StencilFunc(gl::NOTEQUAL, 1, 0xFF);
+            gl::StencilOp(gl::KEEP, gl::KEEP, gl::REPLACE);
+
             gl::ClearColor(0.0, 0.0, 0.0, 0.0);
         }
     }
