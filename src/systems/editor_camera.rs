@@ -53,7 +53,15 @@ impl System for EditorCamera {
         );
 
         OpenGL::set_mat4_to_ubo(view, state.camera_ubo, 64);
-        OpenGL::set_vec3_to_ubo(transform.position, state.camera_ubo, 128);
+        OpenGL::set_vec3_to_ubo(transform.position, state.camera_ubo, 192);
+
+        let center = glm::vec3(0., 0., 0.);
+        let sk = glm::look_at(
+            &center,
+            &(center + cam.front),
+            &cam.up,
+        );
+        OpenGL::set_mat4_to_ubo(sk, state.camera_ubo, 128);
     }
 }
 

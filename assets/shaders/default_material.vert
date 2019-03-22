@@ -14,6 +14,7 @@ out vec3 FragPos;
 uniform Camera {
   mat4 projection;
   mat4 view;
+  mat4 _;
   vec3 cam_pos;
 };
 

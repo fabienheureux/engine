@@ -60,9 +60,9 @@ pub struct Asset {
 // All image are converted in rgba.
 #[derive(Debug)]
 pub struct Texture {
-    raw: Vec<u8>,
-    width: i32,
-    height: i32,
+    pub raw: Vec<u8>,
+    pub width: i32,
+    pub height: i32,
 }
 
 impl Asset {
@@ -136,6 +136,14 @@ impl AssetManager {
         let ressources = self.get_ressource::<T>(asset);
 
         (asset, ressources)
+    }
+
+    // TODO: WTF, get rid of this my dear...
+    pub fn get_only_r<T: 'static>(&self, name: &str) -> &T {
+        let asset = self.get_asset(name);
+        let ressources = self.get_ressource::<T>(asset);
+
+        ressources
     }
 
     pub fn get_ressources<T: 'static>(&self) -> Vec<&T> {

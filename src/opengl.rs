@@ -1,4 +1,7 @@
-use crate::constants::{SCREEN_HEIGHT, SCREEN_WIDTH};
+use crate::{
+    asset_manager::Texture,
+    constants::{SCREEN_HEIGHT, SCREEN_WIDTH},
+};
 use gl;
 use gl::types::{GLfloat, GLsizei, GLsizeiptr};
 use glutin::{GlContext, GlWindow};
@@ -146,8 +149,9 @@ impl OpenGL {
         // -------------------
         // projection: 64b
         // view: 64b
+        // skybox_v: 64b
         // cam_pos: 16b
-        let total = 2 * mat_4_size + vec3_size;
+        let total = 3 * mat_4_size + vec3_size;
         OpenGL::bind_ubo(binding_point, total as isize)
     }
 
@@ -474,6 +478,130 @@ impl OpenGL {
         (vao, 36, false)
     }
 
+    pub fn gen_skybox() -> (u32, i32, bool) {
+        #[cfg_attr(rustfmt, rustfmt_skip)]
+        let vertices: [f32; 108] = [
+            -1.0,  1.0, -1.0,
+            -1.0, -1.0, -1.0,
+            1.0, -1.0, -1.0,
+            1.0, -1.0, -1.0,
+            1.0,  1.0, -1.0,
+            -1.0,  1.0, -1.0,
+
+            -1.0, -1.0,  1.0,
+            -1.0, -1.0, -1.0,
+            -1.0,  1.0, -1.0,
+            -1.0,  1.0, -1.0,
+            -1.0,  1.0,  1.0,
+            -1.0, -1.0,  1.0,
+
+            1.0, -1.0, -1.0,
+            1.0, -1.0,  1.0,
+            1.0,  1.0,  1.0,
+            1.0,  1.0,  1.0,
+            1.0,  1.0, -1.0,
+            1.0, -1.0, -1.0,
+
+            -1.0, -1.0,  1.0,
+            -1.0,  1.0,  1.0,
+            1.0,  1.0,  1.0,
+            1.0,  1.0,  1.0,
+            1.0, -1.0,  1.0,
+            -1.0, -1.0,  1.0,
+
+            -1.0,  1.0, -1.0,
+            1.0,  1.0, -1.0,
+            1.0,  1.0,  1.0,
+            1.0,  1.0,  1.0,
+            -1.0,  1.0,  1.0,
+            -1.0,  1.0, -1.0,
+
+            -1.0, -1.0, -1.0,
+            -1.0, -1.0,  1.0,
+            1.0, -1.0, -1.0,
+            1.0, -1.0, -1.0,
+            -1.0, -1.0,  1.0,
+            1.0, -1.0,  1.0
+        ];
+
+        let vao = OpenGL::gen_vao();
+        let vbo = OpenGL::gen_buffer();
+
+        unsafe {
+            gl::BindVertexArray(vao);
+
+            gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
+            gl::BufferData(
+                gl::ARRAY_BUFFER,
+                (vertices.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
+                &vertices[0] as *const f32 as *const c_void,
+                gl::STATIC_DRAW,
+            );
+
+            gl::VertexAttribPointer(
+                0,
+                3,
+                gl::FLOAT,
+                gl::FALSE,
+                3 * mem::size_of::<GLfloat>() as GLsizei,
+                ptr::null(),
+            );
+            gl::EnableVertexAttribArray(0);
+        }
+
+        (vao, 36, false)
+    }
+
+    pub fn load_cubemap(skybox: Vec<&Texture>) -> u32 {
+        let mut id: u32 = 0;
+        unsafe {
+            gl::GenTextures(1, &mut id);
+            gl::BindTexture(gl::TEXTURE_CUBE_MAP, id);
+
+            skybox.iter().enumerate().for_each(|(i, img)| {
+                gl::TexImage2D(
+                    gl::TEXTURE_CUBE_MAP_POSITIVE_X + i as u32,
+                    0,
+                    gl::RGBA as i32,
+                    img.width,
+                    img.height,
+                    0,
+                    gl::RGBA,
+                    gl::UNSIGNED_BYTE,
+                    img.raw.as_ptr() as *const c_void,
+                );
+            });
+
+            gl::TexParameteri(
+                gl::TEXTURE_CUBE_MAP,
+                gl::TEXTURE_MIN_FILTER,
+                gl::LINEAR as i32,
+            );
+            gl::TexParameteri(
+                gl::TEXTURE_CUBE_MAP,
+                gl::TEXTURE_MAG_FILTER,
+                gl::LINEAR as i32,
+            );
+            gl::TexParameteri(
+                gl::TEXTURE_CUBE_MAP,
+                gl::TEXTURE_WRAP_S,
+                gl::CLAMP_TO_EDGE as i32,
+            );
+            gl::TexParameteri(
+                gl::TEXTURE_CUBE_MAP,
+                gl::TEXTURE_WRAP_T,
+                gl::CLAMP_TO_EDGE as i32,
+            );
+            gl::TexParameteri(
+                gl::TEXTURE_CUBE_MAP,
+                gl::TEXTURE_WRAP_R,
+                gl::CLAMP_TO_EDGE as i32,
+            );
+        }
+
+        id
+    }
+
     /// This method can load the attached texture into the memory and give it
     /// to the GPU.
     /// Works only for RGBA textures.
@@ -557,6 +685,20 @@ impl OpenGL {
                 gl::ActiveTexture(gl::TEXTURE0);
                 gl::BindTexture(gl::TEXTURE_2D, texture_id);
             };
+
+            gl::DrawArrays(gl::TRIANGLES, 0, triangles);
+
+            // Cleanup
+            gl::BindVertexArray(0);
+        }
+    }
+
+    pub fn draw_skybox(vao: u32, texture: u32, triangles: i32) {
+        unsafe {
+            gl::BindVertexArray(vao);
+
+            gl::ActiveTexture(gl::TEXTURE0);
+            gl::BindTexture(gl::TEXTURE_CUBE_MAP, texture);
 
             gl::DrawArrays(gl::TRIANGLES, 0, triangles);
 

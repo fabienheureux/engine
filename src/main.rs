@@ -38,13 +38,13 @@ mod time;
 mod window;
 
 use crate::{
-    shader::Shader,
     constants::SCENE_PATH,
     ecs::World,
     editor::Editor,
     game_loop::GameLoop,
     game_state::GameState,
     opengl::OpenGL,
+    shader::Shader,
     systems::{EditorCamera, Renderer},
 };
 use notify::{RecommendedWatcher, RecursiveMode, Watcher};
@@ -70,14 +70,6 @@ fn main() -> Result<(), notify::Error> {
     watcher.watch(SCENE_PATH, RecursiveMode::NonRecursive)?;
 
     game_loop.start(|time| {
-        Editor::run(&mut state);
-        // First render pass. 
-        // We render to the scene fbo.
-        let (fbo, tex) = state.scene_fbo;
-        OpenGL::use_fbo(fbo);
-        OpenGL::set_depth_buffer(true);
-        OpenGL::clear_color((0., 0., 0.));
-
         state.window.capture();
         state.time = time.clone();
 
@@ -87,7 +79,24 @@ fn main() -> Result<(), notify::Error> {
             world.load_entities(helpers::load_scene("scene_1.ron", &mut state));
         }
 
+        Editor::run(&mut state);
+
+        // First render pass.
+        // We render to the scene fbo.
+        let (fbo, tex) = state.scene_fbo;
+        OpenGL::use_fbo(fbo);
+        OpenGL::set_depth_buffer(true);
+        OpenGL::clear_color((0., 0., 0.));
+
         world.run(&mut state);
+
+        // Skybox
+        unsafe { gl::DepthFunc(gl::LEQUAL) }
+        let (_, shader) = state.asset_manager.get::<Shader>("skybox");
+        OpenGL::use_shader(shader.id);
+        shader.set_int("skybox", 0);
+        OpenGL::draw_skybox(state.skybox.0, state.skybox.2, state.skybox.1);
+        unsafe { gl::DepthFunc(gl::LESS) }
 
         // Final render pass with no post processing.
         // with the default framebuffer.
