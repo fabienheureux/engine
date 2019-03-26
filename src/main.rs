@@ -28,6 +28,7 @@ mod components;
 mod constants;
 mod ecs;
 mod editor;
+mod fonts;
 mod game_loop;
 mod game_state;
 mod helpers;

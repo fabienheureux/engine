@@ -10,21 +10,21 @@
      ),
    ),
  LightSource(
-   2,
-   Transform(
-     position: [0., 2., 0.],
-     rotate: [0., 0., 0.],
-     scale: [0.5, 0.5, 0.5],
+     3,
+     Transform(
+       position: [-5., 0., 0.],
+       rotate: [0., 0., 0.],
+       scale: [1., 1., 1.],
+       ),
+     Light(
+       ubo_index: 0,
+       kind: Directional,
+       direction: [1., 0., 1.],
+       ambient: [0.2, 0.2, 0.2],
+       diffuse: [0.5, 0.5, 0.5],
+       specular: [1., 1., 1.],
+       )
      ),
-   Light(
-     ubo_index: 0,
-     kind: Directional,
-     direction: [0., 0., 1.],
-     ambient: [0.2, 0.2, 0.2],
-     diffuse: [0.5, 0.5, 0.5],
-     specular: [1., 1., 1.],
-     )
-   ),
  LightSource(
      3,
      Transform(

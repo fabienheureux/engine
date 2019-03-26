@@ -12,6 +12,7 @@ image = "0.21.0"
 ron = "0.4.1"
 serde= "1.0.85"
 notify="4.0.0"
+rusttype = "0.7.5"
 
 
 [dependencies.nalgebra]
