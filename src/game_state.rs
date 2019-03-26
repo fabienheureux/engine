@@ -51,20 +51,17 @@ impl GameState {
         asset_manager.add_shader("skybox", "skybox", "skybox");
 
         // Load skybox data.
-        asset_manager.add_texture("skybox_up.png");
-        asset_manager.add_texture("skybox_bk.png");
-        asset_manager.add_texture("skybox_ft.png");
-        asset_manager.add_texture("skybox_dn.png");
-        asset_manager.add_texture("skybox_rt.png");
-        asset_manager.add_texture("skybox_lf.png");
+        // TODO: Load real skybox textures after fixing why it takes 
+        // so much time to load.
+        asset_manager.add_texture("skybox_up.jpg");
 
         let skybox: Vec<&Texture> = vec![
-            asset_manager.get_only_r::<Texture>("skybox_lf.png"),
-            asset_manager.get_only_r::<Texture>("skybox_rt.png"),
-            asset_manager.get_only_r::<Texture>("skybox_up.png"),
-            asset_manager.get_only_r::<Texture>("skybox_dn.png"),
-            asset_manager.get_only_r::<Texture>("skybox_ft.png"),
-            asset_manager.get_only_r::<Texture>("skybox_bk.png"),
+            asset_manager.get_ressource::<Texture>("skybox_up.jpg"),
+            asset_manager.get_ressource::<Texture>("skybox_up.jpg"),
+            asset_manager.get_ressource::<Texture>("skybox_up.jpg"),
+            asset_manager.get_ressource::<Texture>("skybox_up.jpg"),
+            asset_manager.get_ressource::<Texture>("skybox_up.jpg"),
+            asset_manager.get_ressource::<Texture>("skybox_up.jpg"),
         ];
 
         let shaders = asset_manager.get_ressources::<Shader>();

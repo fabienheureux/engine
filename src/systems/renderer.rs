@@ -27,7 +27,7 @@ impl System for Renderer {
         model = glm::scale(&model, &transform.scale);
 
         let vao = mesh.get_vao();
-        let (_, shader) = state.asset_manager.get::<Shader>(mesh.shader);
+        let shader = state.asset_manager.get_ressource::<Shader>(mesh.shader);
         let texture_key = mesh.get_texture();
 
         OpenGL::use_shader(shader.id);

@@ -92,7 +92,7 @@ fn main() -> Result<(), notify::Error> {
 
         // Skybox
         unsafe { gl::DepthFunc(gl::LEQUAL) }
-        let (_, shader) = state.asset_manager.get::<Shader>("skybox");
+        let shader = state.asset_manager.get_ressource::<Shader>("skybox");
         OpenGL::use_shader(shader.id);
         shader.set_int("skybox", 0);
         OpenGL::draw_skybox(state.skybox.0, state.skybox.2, state.skybox.1);
@@ -103,7 +103,8 @@ fn main() -> Result<(), notify::Error> {
         OpenGL::use_fbo(0);
         OpenGL::clear_color((1., 1., 1.));
 
-        let (_, shader) = state.asset_manager.get::<Shader>("screen_output");
+        let shader =
+            state.asset_manager.get_ressource::<Shader>("screen_output");
         OpenGL::set_depth_buffer(false);
         OpenGL::use_shader(shader.id);
         shader.set_int("screen", 0);
