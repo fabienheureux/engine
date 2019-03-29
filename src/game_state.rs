@@ -49,6 +49,8 @@ impl GameState {
         // TODO: Should rename those shaders.
         asset_manager.add_shader("screen_output", "quad", "quad");
         asset_manager.add_shader("skybox", "skybox", "skybox");
+        // For text purpose.
+        asset_manager.add_shader("text", "text", "text");
 
         // Load skybox data.
         // TODO: Load real skybox textures after fixing why it takes 

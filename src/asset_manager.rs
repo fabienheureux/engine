@@ -36,7 +36,6 @@ impl AssetManager {
         if !self.assets.contains_key(path) {
             let texture_path = String::from([TEXTURE_PATH, path].join(""));
             let texture = Self::memory_load(texture_path.as_str());
-            dbg!(texture_path);
             let (width, height) = texture.dimensions();
 
             let indice = self.storage.data.len();

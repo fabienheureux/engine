@@ -1,4 +1,5 @@
 [package]
+
 name = "engine"
 version = "0.1.0"
 authors = ["Alexandre Chêne <kooparse@protonmail.com>"]
@@ -13,7 +14,6 @@ ron = "0.4.1"
 serde= "1.0.85"
 notify="4.0.0"
 rusttype = "0.7.5"
-
 
 [dependencies.nalgebra]
 version =  "0.16"

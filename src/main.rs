@@ -42,6 +42,7 @@ use crate::{
     constants::SCENE_PATH,
     ecs::World,
     editor::Editor,
+    fonts::GameFont,
     game_loop::GameLoop,
     game_state::GameState,
     opengl::OpenGL,
@@ -56,6 +57,8 @@ fn main() -> Result<(), notify::Error> {
     let mut state = GameState::new();
     let mut game_loop = GameLoop::new();
     let mut world = World::new();
+
+    let font = GameFont::new();
 
     // Load scene for the first time.
     world.load_entities(helpers::load_scene("scene_1.ron", &mut state));
@@ -85,7 +88,7 @@ fn main() -> Result<(), notify::Error> {
         // First render pass.
         // We render to the scene fbo.
         let (fbo, tex) = state.scene_fbo;
-        OpenGL::use_fbo(fbo);
+        // OpenGL::use_fbo(fbo);
         OpenGL::set_depth_buffer(true);
         OpenGL::clear_color((0., 0., 0.));
 
@@ -99,18 +102,22 @@ fn main() -> Result<(), notify::Error> {
         OpenGL::draw_skybox(state.skybox.0, state.skybox.2, state.skybox.1);
         unsafe { gl::DepthFunc(gl::LESS) }
 
-        // Final render pass with no post processing.
-        // with the default framebuffer.
-        OpenGL::use_fbo(0);
-        OpenGL::clear_color((1., 1., 1.));
+        let text_shader = state.asset_manager.get_ressource::<Shader>("text");
+        font.render("Hello", text_shader, (0., 1., 1.));
 
-        let shader =
-            state.asset_manager.get_ressource::<Shader>("screen_output");
-        OpenGL::set_depth_buffer(false);
-        OpenGL::use_shader(shader.id);
-        shader.set_int("screen", 0);
+        // Final render pass with for post effects.
+        // We're using the default framebuffer.
+        //
+        // OpenGL::use_fbo(0);
+        // OpenGL::clear_color((1., 1., 1.));
 
-        OpenGL::draw(state.screen_vao, Some(tex), 6);
+        // let shader =
+        //     state.asset_manager.get_ressource::<Shader>("screen_output");
+        // OpenGL::set_depth_buffer(false);
+        // OpenGL::use_shader(shader.id);
+        // shader.set_int("screen", 0);
+
+        // OpenGL::draw(state.screen_vao, Some(tex), 6);
 
         state.window.swap_gl();
         running

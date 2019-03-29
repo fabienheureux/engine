@@ -602,6 +602,55 @@ impl OpenGL {
         id
     }
 
+    pub fn load_glyph(width: i32, height: i32, image: &Vec<u8>) -> u32 {
+        let mut id: u32 = 0;
+
+        unsafe {
+            gl::PixelStorei(gl::UNPACK_ALIGNMENT, 1); 
+
+            gl::GenTextures(1, &mut id);
+            gl::BindTexture(gl::TEXTURE_2D, id);
+
+            gl::TexParameteri(
+                gl::TEXTURE_2D,
+                gl::TEXTURE_WRAP_S,
+                gl::CLAMP_TO_EDGE as i32,
+            );
+            gl::TexParameteri(
+                gl::TEXTURE_2D,
+                gl::TEXTURE_WRAP_T,
+                gl::CLAMP_TO_EDGE as i32,
+            );
+            gl::TexParameteri(
+                gl::TEXTURE_2D,
+                gl::TEXTURE_MIN_FILTER,
+                gl::LINEAR as i32,
+            );
+            gl::TexParameteri(
+                gl::TEXTURE_2D,
+                gl::TEXTURE_MAG_FILTER,
+                gl::LINEAR as i32,
+            );
+
+            // Load texture data.
+            gl::TexImage2D(
+                gl::TEXTURE_2D,
+                0,
+                gl::RED as i32,
+                width,
+                height,
+                0,
+                gl::RED,
+                gl::UNSIGNED_BYTE,
+                image.as_ptr() as *const c_void,
+            );
+
+            gl::GenerateMipmap(gl::TEXTURE_2D);
+        }
+
+        id
+    }
+
     /// This method can load the attached texture into the memory and give it
     /// to the GPU.
     /// Works only for RGBA textures.
