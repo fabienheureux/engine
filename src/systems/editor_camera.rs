@@ -4,6 +4,7 @@ use crate::{
     components::{Camera, Transform},
     ecs::{Entity, System, World},
     opengl::OpenGL,
+    shader::Shader,
     time::Time,
     window::Window,
 };
@@ -46,6 +47,14 @@ impl System for EditorCamera {
         let cam = entity.get::<Camera>();
         let transform = entity.get::<Transform>();
 
+        let cam_pos = format!(
+            "({:.1},{:.1},{:.1})",
+            transform.position.x,
+            transform.position.y,
+            transform.position.z
+        );
+        state.cam_pos = cam_pos;
+
         let view = glm::look_at(
             &transform.position,
             &(transform.position + cam.front),
@@ -56,11 +65,7 @@ impl System for EditorCamera {
         OpenGL::set_vec3_to_ubo(transform.position, state.camera_ubo, 192);
 
         let center = glm::vec3(0., 0., 0.);
-        let sk = glm::look_at(
-            &center,
-            &(center + cam.front),
-            &cam.up,
-        );
+        let sk = glm::look_at(&center, &(center + cam.front), &cam.up);
         OpenGL::set_mat4_to_ubo(sk, state.camera_ubo, 128);
     }
 }

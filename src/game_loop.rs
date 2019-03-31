@@ -9,6 +9,7 @@ pub struct GameLoop {
     frame_rate: Duration,
     frame_number: u64,
     is_running: bool,
+    start: Duration,
     time: Time,
 }
 
@@ -21,14 +22,18 @@ impl GameLoop {
     }
 
     /// Start the game loop.
-    pub fn start(&mut self, mut update: impl FnMut(&Time) -> bool) {
+    pub fn start(&mut self, mut update: impl FnMut(&Time, f64) -> bool) {
         self.is_running = true;
         self.time.now = Time::now();
+        self.start = Time::now();
 
         while self.is_running {
             self.update_time();
 
-            self.is_running = update(&self.time);
+            let fps = (self.frame_number as f64)
+                / Time::duration_to_secs(self.time.now - self.start);
+
+            self.is_running = update(&self.time, fps);
 
             self.frame_number += 1;
             self.sync_loop();

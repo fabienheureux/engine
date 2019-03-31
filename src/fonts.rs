@@ -1,11 +1,13 @@
-use crate::{opengl::OpenGL, shader::Shader};
+use crate::{
+    constants::{SCREEN_HEIGHT, SCREEN_WIDTH},
+    opengl::OpenGL,
+    shader::Shader,
+};
 use gl;
 use gl::types::{GLfloat, GLsizei, GLsizeiptr};
-use image::{DynamicImage, Rgba};
+use image::{DynamicImage, Luma};
 use nalgebra_glm as glm;
-use rusttype::{
-    point, Font, FontCollection, HMetrics, PositionedGlyph, Rect, Scale,
-};
+use rusttype::{point, FontCollection, HMetrics, PositionedGlyph, Rect, Scale};
 use std::collections::HashMap;
 use std::os::raw::c_void;
 use std::{mem, ptr};
@@ -13,58 +15,46 @@ use std::{mem, ptr};
 #[derive(Debug)]
 pub struct Character {
     texture_id: u32,
-    size: glm::TVec2<f32>,
-    bounding_box: Rect<f32>,
+    bounding_box: Option<Rect<i32>>,
+    height: u32,
+    width: u32,
     h_metrics: HMetrics,
 }
 
 impl Character {
-    pub fn new(character: &str, height: f32, font: &Font) -> Self {
-        // 2x scale in x direction to counter the aspect ratio of monospace characters.
-        let scale = Scale {
-            x: height * 2.0,
-            y: height,
-        };
-
+    /// When adding a new font, we're gonna load each glyphs in a texture buffer.
+    pub fn new(glyph: &PositionedGlyph, scale: Scale) -> Self {
+        let font = glyph.font().unwrap();
         let v_metrics = font.v_metrics(scale);
-        let offset = point(0., 0.);
+        let metrics = glyph.standalone().unpositioned().h_metrics();
 
-        let glyphs: Vec<PositionedGlyph> =
-            font.layout(character, scale, offset).collect();
-
-        // work out the layout size
-        let height = (v_metrics.ascent - v_metrics.descent).ceil() as u32;
-
-        // Loop through the glyphs in the text, positing each one on a line
-        let glyph = glyphs.first().unwrap();
+        if glyph.pixel_bounding_box().is_none() {
+            return Self {
+                texture_id: 0,
+                bounding_box: None,
+                height: 0,
+                width: 0,
+                h_metrics: metrics,
+            };
+        }
 
         // Draw the glyph into the image per-pixel by using the draw closure
-        let width = glyph.pixel_bounding_box().unwrap().max.x as u32;
+        let bb = glyph.pixel_bounding_box().unwrap();
 
-        let mut image = DynamicImage::new_rgba8(width, height).to_rgba();
+        let width = bb.width() as u32;
+        let height = (v_metrics.ascent - v_metrics.descent).ceil() as u32;
 
-        glyph.draw(|x, y, v| {
-            if character == "H" {
-                dbg!((x, y, v));
-            }
+        let mut image = DynamicImage::new_luma8(width, height).to_luma();
 
+        glyph.draw(|x, y, alpha| {
             image.put_pixel(
                 x,
-                y,
-                Rgba {
-                    data: [255, 0, 0, (v * 255.) as u8],
+                y + bb.min.y as u32,
+                Luma {
+                    data: [(alpha * 255.) as u8],
                 },
             )
         });
-
-        let metrics = glyph.standalone().unpositioned().h_metrics();
-
-        if character == "H" {
-            dbg!(metrics);
-            dbg!(glyph.pixel_bounding_box().unwrap());
-            dbg!(image.width());
-            dbg!(image.height());
-        }
 
         // Load the font texture quad into opengl.
         let texture_id = OpenGL::load_glyph(
@@ -73,16 +63,11 @@ impl Character {
             &image.into_vec(),
         );
 
-        //
-        // Useful for debugging...
-        //
-        // let path = format!("assets/test_{}.png", character);
-        // image.save(path).unwrap();
-
         Self {
             texture_id,
-            bounding_box: glyph.unpositioned().exact_bounding_box().unwrap(),
-            size: glm::vec2(width as f32, height as f32),
+            bounding_box: glyph.pixel_bounding_box(),
+            height,
+            width,
             h_metrics: metrics,
         }
     }
@@ -92,27 +77,36 @@ impl Character {
 pub struct GameFont {
     vao: u32,
     vbo: u32,
-    characters: HashMap<String, Character>,
+    characters: HashMap<char, Character>,
 }
 
 impl GameFont {
     pub fn new() -> Self {
-        let ttf = include_bytes!("../assets/fonts/Merriweather-Regular.ttf");
+        let ttf = include_bytes!("../assets/fonts/OpenSans-Regular.ttf");
         let font = FontCollection::from_bytes(ttf as &[u8])
             .unwrap()
             .into_font()
             .expect("Error when turning font collection into single font.");
 
-        let height = 12.4;
-        let mut characters: HashMap<String, Character> = HashMap::default();
+        let scale = Scale::uniform(32.);
+        let mut characters: HashMap<char, Character> = HashMap::default();
 
-        // TODO: Iterate over all the glyphs inside the font.
-        // I don't want to iterate only the alphabet here, but rather iterate
-        // over all the glyphs contained in the font.
-        let alpha = "a b c d e f g h i j k l m n o p q r s t u w x y z";
-        alpha.split_whitespace().for_each(|c| {
-            characters
-                .insert(String::from(c), Character::new(c, height, &font));
+        let alpha = "abcdefghijklmnopqrstuvwxyzéèôçñ";
+        let num = "1234567890";
+        let specials = "!?.,:;'(){}[]/+|_-\"\\ ";
+
+        let chars =
+            [alpha, alpha.to_uppercase().as_str(), num, specials].join("");
+
+        let v_metrics = font.v_metrics(scale);
+        let offset = point(0., v_metrics.ascent);
+
+        let glyphs: Vec<_> =
+            font.layout(chars.as_str(), scale, offset).collect();
+
+        glyphs.iter().enumerate().for_each(|(index, g)| {
+            let c = chars.chars().nth(index).unwrap();
+            characters.insert(c, Character::new(g, scale));
         });
 
         let vao = OpenGL::gen_vao();
@@ -125,14 +119,17 @@ impl GameFont {
         }
     }
 
-    pub fn gl_quad_load(&self, c: &Character) {
-        let scale = 1.;
+    pub fn gl_quad_load(&self, c: &Character, pos: (f32, f32), advance: f32) {
+        let padding = 20.;
 
-        let x = 0. * scale;
-        let y = 0. * scale;
+        let mut x = (pos.0 + c.h_metrics.left_side_bearing + advance);
+        let mut y = pos.1;
 
-        let w = c.size.x * scale;
-        let h = c.size.y * scale;
+        x += padding;
+        y += padding;
+
+        let w = c.width as f32;
+        let h = c.height as f32;
 
         #[cfg_attr(rustfmt, rustfmt_skip)]
         let vertices: [f32; 24] = [
@@ -154,7 +151,7 @@ impl GameFont {
                 gl::ARRAY_BUFFER,
                 (vertices.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
                 &vertices[0] as *const f32 as *const c_void,
-                gl::STATIC_DRAW,
+                gl::DYNAMIC_DRAW,
             );
 
             let stride = 4 * mem::size_of::<GLfloat>() as GLsizei;
@@ -172,11 +169,17 @@ impl GameFont {
         }
     }
 
-    pub fn get(&self, character: &str) -> &Character {
-        &self.characters[character]
+    pub fn get(&self, character: char) -> &Character {
+        &self.characters[&character]
     }
 
-    pub fn render(&self, _text: &str, shader: &Shader, color: (f32, f32, f32)) {
+    pub fn render(
+        &self,
+        text: &str,
+        shader: &Shader,
+        pos: (f32, f32),
+        color: (f32, f32, f32),
+    ) {
         OpenGL::use_shader(shader.id);
 
         unsafe {
@@ -184,19 +187,29 @@ impl GameFont {
             gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
         }
 
+        let projection =
+            glm::ortho(0., SCREEN_WIDTH, 0., SCREEN_HEIGHT, -1., 1.);
+
+        shader.set_matrix4("projection", glm::value_ptr(&projection));
         shader.set_vec3("textColor", &color);
         shader.set_int("text", 0);
 
-        let letter = "a";
-        let c = self.get(letter);
+        let mut advance = 0.;
+        text.chars().for_each(|letter| {
+            let character = self.get(letter);
 
-        self.gl_quad_load(c);
+            if character.bounding_box.is_some() {
+                self.gl_quad_load(character, pos, advance);
+            }
 
-        unsafe {
-            gl::BindVertexArray(self.vao);
-            gl::ActiveTexture(gl::TEXTURE0);
-            gl::BindTexture(gl::TEXTURE_2D, c.texture_id);
-            gl::DrawArrays(gl::TRIANGLES, 0, 6);
-        }
+            advance += character.h_metrics.advance_width;
+
+            unsafe {
+                gl::BindVertexArray(self.vao);
+                gl::ActiveTexture(gl::TEXTURE0);
+                gl::BindTexture(gl::TEXTURE_2D, character.texture_id);
+                gl::DrawArrays(gl::TRIANGLES, 0, 6);
+            }
+        });
     }
 }

@@ -1,4 +1,5 @@
 use crate::{
+    fonts::GameFont,
     asset_manager::{AssetManager, Texture},
     constants::{SCREEN_HEIGHT, SCREEN_WIDTH},
     opengl::OpenGL,
@@ -19,6 +20,8 @@ pub struct GameState {
     pub screen_vao: u32,
     pub scene_fbo: (u32, u32),
     pub skybox: (u32, i32, u32),
+    pub debug_text: GameFont,
+    pub cam_pos: String,
 }
 
 impl GameState {
@@ -83,6 +86,8 @@ impl GameState {
             (data.0, data.1, tex)
         };
 
+        let debug_text = GameFont::new();
+
         Self {
             window,
             time: Time::default(),
@@ -93,6 +98,8 @@ impl GameState {
             screen_vao,
             scene_fbo,
             skybox,
+            debug_text,
+            cam_pos: String::default(),
         }
     }
 }

@@ -39,7 +39,7 @@ mod time;
 mod window;
 
 use crate::{
-    constants::SCENE_PATH,
+    constants::{SCENE_PATH, SCREEN_HEIGHT, SCREEN_WIDTH},
     ecs::World,
     editor::Editor,
     fonts::GameFont,
@@ -58,8 +58,6 @@ fn main() -> Result<(), notify::Error> {
     let mut game_loop = GameLoop::new();
     let mut world = World::new();
 
-    let font = GameFont::new();
-
     // Load scene for the first time.
     world.load_entities(helpers::load_scene("scene_1.ron", &mut state));
 
@@ -73,7 +71,7 @@ fn main() -> Result<(), notify::Error> {
         Watcher::new(sender, Duration::from_secs(2))?;
     watcher.watch(SCENE_PATH, RecursiveMode::NonRecursive)?;
 
-    game_loop.start(|time| {
+    game_loop.start(|time, fps| {
         state.window.capture();
         state.time = time.clone();
 
@@ -88,13 +86,13 @@ fn main() -> Result<(), notify::Error> {
         // First render pass.
         // We render to the scene fbo.
         let (fbo, tex) = state.scene_fbo;
-        // OpenGL::use_fbo(fbo);
+        OpenGL::use_fbo(fbo);
         OpenGL::set_depth_buffer(true);
         OpenGL::clear_color((0., 0., 0.));
 
         world.run(&mut state);
 
-        // Skybox
+        // Skybox pass.
         unsafe { gl::DepthFunc(gl::LEQUAL) }
         let shader = state.asset_manager.get_ressource::<Shader>("skybox");
         OpenGL::use_shader(shader.id);
@@ -102,22 +100,32 @@ fn main() -> Result<(), notify::Error> {
         OpenGL::draw_skybox(state.skybox.0, state.skybox.2, state.skybox.1);
         unsafe { gl::DepthFunc(gl::LESS) }
 
+        // For post effects, we're using the default framebuffer.
+        OpenGL::use_fbo(0);
+        OpenGL::clear_color((1., 1., 1.));
+
+        let shader =
+            state.asset_manager.get_ressource::<Shader>("screen_output");
+        OpenGL::set_depth_buffer(false);
+        OpenGL::use_shader(shader.id);
+        shader.set_int("screen", 0);
+        OpenGL::draw(state.screen_vao, Some(tex), 6);
+
+        // HUD render pass.
+        let fps = format!("{:.2} fps", fps);
         let text_shader = state.asset_manager.get_ressource::<Shader>("text");
-        font.render("Hello", text_shader, (0., 1., 1.));
-
-        // Final render pass with for post effects.
-        // We're using the default framebuffer.
-        //
-        // OpenGL::use_fbo(0);
-        // OpenGL::clear_color((1., 1., 1.));
-
-        // let shader =
-        //     state.asset_manager.get_ressource::<Shader>("screen_output");
-        // OpenGL::set_depth_buffer(false);
-        // OpenGL::use_shader(shader.id);
-        // shader.set_int("screen", 0);
-
-        // OpenGL::draw(state.screen_vao, Some(tex), 6);
+        state.debug_text.render(
+            fps.as_str(),
+            text_shader,
+            (SCREEN_WIDTH - 130., SCREEN_HEIGHT - 60.),
+            (255., 0., 0.),
+        );
+        state.debug_text.render(
+            state.cam_pos.as_str(),
+            text_shader,
+            (SCREEN_WIDTH - 160., 0.),
+            (255., 0., 0.),
+        );
 
         state.window.swap_gl();
         running
