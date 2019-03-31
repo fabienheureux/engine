@@ -86,7 +86,7 @@ impl GameState {
             (data.0, data.1, tex)
         };
 
-        let debug_text = GameFont::new();
+        let debug_text = GameFont::new(28.);
 
         Self {
             window,

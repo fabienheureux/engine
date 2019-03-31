@@ -606,7 +606,7 @@ impl OpenGL {
         let mut id: u32 = 0;
 
         unsafe {
-            gl::PixelStorei(gl::UNPACK_ALIGNMENT, 1); 
+            gl::PixelStorei(gl::UNPACK_ALIGNMENT, 1);
 
             gl::GenTextures(1, &mut id);
             gl::BindTexture(gl::TEXTURE_2D, id);
@@ -649,6 +649,74 @@ impl OpenGL {
         }
 
         id
+    }
+
+    pub fn create_font_quad() -> (u32, u32) {
+        let vao = Self::gen_vao();
+        let vbo = Self::gen_buffer();
+
+        let vertices: [f32; 24] = [0.; 24];
+
+        unsafe {
+            gl::BindVertexArray(vao);
+            gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
+
+            gl::BufferData(
+                gl::ARRAY_BUFFER,
+                (vertices.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
+                &vertices[0] as *const f32 as *const c_void,
+                gl::DYNAMIC_DRAW,
+            );
+
+            let stride = 4 * mem::size_of::<GLfloat>() as GLsizei;
+
+            gl::VertexAttribPointer(
+                0,
+                4,
+                gl::FLOAT,
+                gl::FALSE,
+                stride,
+                ptr::null(),
+            );
+
+            gl::EnableVertexAttribArray(0);
+        }
+        (vao, vbo)
+    }
+
+    pub fn update_font_quad(
+        vao: u32,
+        vbo: u32,
+        x: f32,
+        y: f32,
+        width: f32,
+        height: f32,
+    ) {
+        #[cfg_attr(rustfmt, rustfmt_skip)]
+        let vertices: [f32; 24] = [
+            // vertex, text coord.
+            x, y + height, 0.0, 0.0,
+            x,  y, 0.0, 1.0,
+            x + width, y, 1.0, 1.0,
+
+            x, y + height, 0.0, 0.0,
+            x + width, y, 1.0, 1.0,
+            x + width, y + height, 1.0, 0.0,
+        ];
+
+        unsafe {
+            gl::BindVertexArray(vao);
+            gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
+
+            gl::BufferSubData(
+                gl::ARRAY_BUFFER,
+                0,
+                (vertices.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
+                &vertices[0] as *const f32 as *const c_void,
+            );
+
+            gl::BindVertexArray(0);
+        }
     }
 
     /// This method can load the attached texture into the memory and give it

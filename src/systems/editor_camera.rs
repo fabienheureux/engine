@@ -4,7 +4,6 @@ use crate::{
     components::{Camera, Transform},
     ecs::{Entity, System, World},
     opengl::OpenGL,
-    shader::Shader,
     time::Time,
     window::Window,
 };

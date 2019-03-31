@@ -42,7 +42,6 @@ use crate::{
     constants::{SCENE_PATH, SCREEN_HEIGHT, SCREEN_WIDTH},
     ecs::World,
     editor::Editor,
-    fonts::GameFont,
     game_loop::GameLoop,
     game_state::GameState,
     opengl::OpenGL,
@@ -112,18 +111,19 @@ fn main() -> Result<(), notify::Error> {
         OpenGL::draw(state.screen_vao, Some(tex), 6);
 
         // HUD render pass.
-        let fps = format!("{:.2} fps", fps);
+        // For now, it is the last render pass 'cause it is easy to debug with
+        // lines mode.
         let text_shader = state.asset_manager.get_ressource::<Shader>("text");
         state.debug_text.render(
-            fps.as_str(),
+            format!("fps: {}", fps.round()).as_str(),
             text_shader,
-            (SCREEN_WIDTH - 130., SCREEN_HEIGHT - 60.),
+            (SCREEN_WIDTH - 105., SCREEN_HEIGHT - 60.),
             (255., 0., 0.),
         );
         state.debug_text.render(
             state.cam_pos.as_str(),
             text_shader,
-            (SCREEN_WIDTH - 160., 0.),
+            (SCREEN_WIDTH - 170., 0.),
             (255., 0., 0.),
         );
 
