@@ -1,13 +1,18 @@
 use crate::{
-    fonts::GameFont,
     asset_manager::{AssetManager, Texture},
     constants::{SCREEN_HEIGHT, SCREEN_WIDTH},
+    fonts::GameFont,
     opengl::OpenGL,
     shader::Shader,
     time::Time,
     window::Window,
 };
 use nalgebra_glm as glm;
+use ncollide3d::shape::{Cuboid, Plane, ShapeHandle};
+use nphysics3d::{
+    object::{ColliderDesc, RigidBodyDesc},
+    world::World,
+};
 
 pub struct GameState {
     pub window: Window,
@@ -22,6 +27,8 @@ pub struct GameState {
     pub skybox: (u32, i32, u32),
     pub debug_text: GameFont,
     pub cam_pos: String,
+
+    pub physic_world: World<f64>,
 }
 
 impl GameState {
@@ -56,7 +63,7 @@ impl GameState {
         asset_manager.add_shader("text", "text", "text");
 
         // Load skybox data.
-        // TODO: Load real skybox textures after fixing why it takes 
+        // TODO: Load real skybox textures after fixing why it takes
         // so much time to load.
         asset_manager.add_texture("skybox_up.png");
 
@@ -88,6 +95,10 @@ impl GameState {
 
         let debug_text = GameFont::new(28.);
 
+        let mut world = World::new();
+        // Earth gravity.
+        world.set_gravity(glm::TVec3::y() * -9.807);
+
         Self {
             window,
             time: Time::default(),
@@ -100,6 +111,7 @@ impl GameState {
             skybox,
             debug_text,
             cam_pos: String::default(),
+            physic_world: world,
         }
     }
 }

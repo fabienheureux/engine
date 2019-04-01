@@ -8,13 +8,15 @@ edition = "2018"
 [dependencies]
 gl = "0.6.0"
 glutin= "0.19.0"
-nalgebra-glm = "0.2"
+nalgebra-glm = "0.4"
 image = "0.21.0"
 ron = "0.4.1"
 serde= "1.0.85"
 notify="4.0.0"
 rusttype = "0.7.5"
+nphysics3d = "0.11.1"
+ncollide3d = "0.19"
 
 [dependencies.nalgebra]
-version =  "0.16"
+version =  "0.18"
 features = ["serde-serialize"]

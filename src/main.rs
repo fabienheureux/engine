@@ -51,6 +51,8 @@ use crate::{
 use notify::{RecommendedWatcher, RecursiveMode, Watcher};
 use std::sync::mpsc::channel;
 use std::time::Duration;
+use nphysics3d::object::RigidBodyDesc;
+use nalgebra_glm as glm;
 
 fn main() -> Result<(), notify::Error> {
     let mut state = GameState::new();
@@ -70,9 +72,23 @@ fn main() -> Result<(), notify::Error> {
         Watcher::new(sender, Duration::from_secs(2))?;
     watcher.watch(SCENE_PATH, RecursiveMode::NonRecursive)?;
 
+    let rigid_body = RigidBodyDesc::new()
+        .translation(glm::TVec3::y() * 5.0)
+        .mass(1.2)
+        .build(&mut state.physic_world);
+
+    let handle = rigid_body.handle();
+
     game_loop.start(|time, fps| {
         state.window.capture();
         state.time = time.clone();
+
+        state.physic_world.step();
+        
+        let body = state.physic_world.body(handle).unwrap();
+        let part = body.part(0).unwrap();
+        let position = part.position().translation.vector;
+        dbg!(position);
 
         let running = !state.window.should_close;
 
