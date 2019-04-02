@@ -4,17 +4,19 @@
  Camera(
    1,
    Transform(
-     position: [0., 0., 3.],
+     position: [0., 1., 3.],
      rotate: [0., 0., 0.],
      scale: [1., 1., 1.],
+     quaternion: [0., 0., 0., 0.],
      ),
    ),
  LightSource(
      3,
      Transform(
-       position: [-3., 0., 0.],
+       position: [-3., 3., 0.],
        rotate: [0., 0., 0.],
-       scale: [1., 1., 1.],
+       scale: [0.5, 0.5, 0.5],
+     quaternion: [0., 0., 0., 0.],
        ),
      Light(
        ubo_index: 0,
@@ -31,6 +33,7 @@
        position: [-2., 0., 0.],
        rotate: [0., 0., 0.],
        scale: [1., 1., 1.],
+     quaternion: [0., 0., 0., 0.],
        ),
      Light(
        ubo_index: 0,
@@ -44,19 +47,32 @@
  Cube(
      4,
      Transform(
-       position: [1., 0., 0.],
+       position: [0., 30., 0.],
        rotate: [0., 0., 0.],
        scale: [1., 1., 1.],
+     quaternion: [0., 0., 0., 0.],
        ),
      "pos_debug.png",
+     Body(mass: 1.2),
      ),
- /* TODO: Add normal for light casting */
+ Cube(
+     4,
+     Transform(
+       position: [0., 20., 0.],
+       rotate: [0., 0., 0.],
+       scale: [1., 1., 1.],
+     quaternion: [0., 0., 0., 0.],
+       ),
+     "pos_debug.png",
+     Body(mass: 1.2),
+     ),
  Plane(
      5,
      Transform(
        position: [0., -0.5, 0.],
        rotate: [0., 0., 0.],
        scale: [5., 5., 5.],
+     quaternion: [0., 0., 0., 0.],
        ),
      "grid_debug.png",
      )

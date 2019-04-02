@@ -46,24 +46,34 @@ use crate::{
     game_state::GameState,
     opengl::OpenGL,
     shader::Shader,
-    systems::{EditorCamera, Renderer},
+    systems::{EditorCamera, Renderer, Physic},
 };
 use notify::{RecommendedWatcher, RecursiveMode, Watcher};
 use std::sync::mpsc::channel;
 use std::time::Duration;
-use nphysics3d::object::RigidBodyDesc;
+
+use crate::components::Collider;
+use ncollide3d::shape::{Cuboid, ShapeHandle};
 use nalgebra_glm as glm;
 
 fn main() -> Result<(), notify::Error> {
     let mut state = GameState::new();
     let mut game_loop = GameLoop::new();
     let mut world = World::new();
+    let mut editor = Editor::default();
+
+
+    // Ground test.
+    let shape = ShapeHandle::new(Cuboid::new(glm::vec3(5., 0.04, 5.)));
+    let position = glm::vec3(0., -0.5, 0.);
+    Collider::new(&mut state.physic_world, shape, position, 1.);
 
     // Load scene for the first time.
     world.load_entities(helpers::load_scene("scene_1.ron", &mut state));
 
     // Add systems
     world.add_system(EditorCamera::default());
+    world.add_system(Physic::default());
     world.add_system(Renderer::default());
 
     // Watch the ressources folder every 2 secs.
@@ -72,31 +82,22 @@ fn main() -> Result<(), notify::Error> {
         Watcher::new(sender, Duration::from_secs(2))?;
     watcher.watch(SCENE_PATH, RecursiveMode::NonRecursive)?;
 
-    let rigid_body = RigidBodyDesc::new()
-        .translation(glm::TVec3::y() * 5.0)
-        .mass(1.2)
-        .build(&mut state.physic_world);
-
-    let handle = rigid_body.handle();
-
     game_loop.start(|time, fps| {
         state.window.capture();
         state.time = time.clone();
 
-        state.physic_world.step();
-        
-        let body = state.physic_world.body(handle).unwrap();
-        let part = body.part(0).unwrap();
-        let position = part.position().translation.vector;
-        dbg!(position);
+        editor.run(&mut state);
 
+        if editor.enabled_physics {
+            state.physic_world.step();
+        }
+        
         let running = !state.window.should_close;
 
         if receiver.try_recv().is_ok() {
             world.load_entities(helpers::load_scene("scene_1.ron", &mut state));
         }
 
-        Editor::run(&mut state);
 
         // First render pass.
         // We render to the scene fbo.

@@ -1,5 +1,7 @@
 use crate::constants::{GAME_TITLE, SCREEN_HEIGHT, SCREEN_WIDTH};
 use crate::opengl::OpenGL;
+use std::collections::HashMap;
+use std::time::{Instant, Duration};
 use glutin::{
     dpi, ContextBuilder, DeviceEvent, ElementState, Event, EventsLoop,
     GlWindow, ModifiersState, MouseButton, VirtualKeyCode, WindowBuilder,
@@ -104,27 +106,36 @@ impl Window {
         &self.mouse_events
     }
 
-    pub fn get_keyboard_events(&self) -> &KeyEvents {
-        &self.key_events
+    pub fn get_keyboard_events(&mut self) -> &mut KeyEvents {
+        &mut self.key_events
     }
 }
 
 /// Store all key events.
 /// We use a vector for storing multiple key press at the same time.
 pub struct KeyEvents {
-    pub keycodes: Vec<VirtualKeyCode>,
+    pub keycodes: HashMap<VirtualKeyCode, Instant>,
     pub modifiers: ModifiersState,
 }
 
 impl KeyEvents {
     /// Will call the closure only if the given keycode is pressed.
     pub fn trigger_on_press(
-        &self,
+        &mut self,
         keycode: VirtualKeyCode,
+        delay: u64,
         mut callback: impl FnMut(),
     ) {
-        if self.keycodes.contains(&keycode) {
-            callback();
+        if let Some(value) = self.keycodes.get_mut(&keycode) {
+            let is_delay_passed = value
+                .elapsed()
+                .checked_sub(Duration::from_millis(delay))
+                .is_some();
+
+            if is_delay_passed {
+                *value = Instant::now();
+                callback();
+            }
         }
     }
 
@@ -133,17 +144,16 @@ impl KeyEvents {
         self.modifiers = modifiers;
     }
 
-    /// Add keycode into the vectors only if not already there.
+    /// Add keycode if not already there.
     pub fn add_keycode(&mut self, keycode: VirtualKeyCode) {
-        if !self.keycodes.contains(&keycode) {
-            self.keycodes.push(keycode);
-        }
+        self.keycodes.entry(keycode).or_insert_with(Instant::now);
     }
-    /// Remove keycode from the vectors.
+
+    /// Remove keycode.
     /// TODO: We should use `remove_item` method when available in stable toolchain.
     pub fn remove_keycode(&mut self, keycode: VirtualKeyCode) {
-        if let Some(index) = self.keycodes.iter().position(|x| *x == keycode) {
-            self.keycodes.remove(index);
+        if self.keycodes.contains_key(&keycode) {
+            self.keycodes.remove(&keycode);
         }
     }
 }
@@ -151,7 +161,7 @@ impl KeyEvents {
 impl Default for KeyEvents {
     fn default() -> Self {
         Self {
-            keycodes: vec![],
+            keycodes: HashMap::new(),
             modifiers: ModifiersState::default(),
         }
     }

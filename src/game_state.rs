@@ -8,11 +8,7 @@ use crate::{
     window::Window,
 };
 use nalgebra_glm as glm;
-use ncollide3d::shape::{Cuboid, Plane, ShapeHandle};
-use nphysics3d::{
-    object::{ColliderDesc, RigidBodyDesc},
-    world::World,
-};
+use nphysics3d::world::World;
 
 pub struct GameState {
     pub window: Window,
@@ -28,7 +24,7 @@ pub struct GameState {
     pub debug_text: GameFont,
     pub cam_pos: String,
 
-    pub physic_world: World<f64>,
+    pub physic_world: World<f32>,
 }
 
 impl GameState {

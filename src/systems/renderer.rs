@@ -21,8 +21,13 @@ impl System for Renderer {
         let mesh = entity.get::<Mesh>();
         let light = entity.get_opt::<Light>();
 
-        let model = glm::Mat4::identity();
-        let mut model = glm::translate(&model, &transform.position);
+        let mut model = glm::Mat4::identity();
+
+        if let Some((axis, angle)) = transform.quaternion.axis_angle() {
+            model = glm::rotate(&model, angle, &axis);
+        }
+
+        model = glm::translate(&model, &transform.position);
 
         model = glm::scale(&model, &transform.scale);
 

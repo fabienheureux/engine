@@ -41,7 +41,7 @@ impl System for EditorCamera {
             window.hide_cursor(false);
         });
 
-        update_pos(entity, &window.get_keyboard_events(), &time);
+        update_pos(entity, &mut state.window.get_keyboard_events(), &time);
 
         let cam = entity.get::<Camera>();
         let transform = entity.get::<Transform>();
@@ -69,7 +69,7 @@ impl System for EditorCamera {
     }
 }
 
-fn update_pos(entity: &mut Entity, keyboard: &KeyEvents, time: &Time) {
+fn update_pos(entity: &mut Entity, keyboard: &mut KeyEvents, time: &Time) {
     let (speed, front, up) = {
         let cam = entity.get::<Camera>();
         (cam.speed, cam.front, cam.up)
@@ -82,27 +82,27 @@ fn update_pos(entity: &mut Entity, keyboard: &KeyEvents, time: &Time) {
         speed *= 2.5;
     }
 
-    keyboard.trigger_on_press(VirtualKeyCode::W, || {
+    keyboard.trigger_on_press(VirtualKeyCode::W, 0, || {
         transform.position += speed * front;
     });
 
-    keyboard.trigger_on_press(VirtualKeyCode::S, || {
+    keyboard.trigger_on_press(VirtualKeyCode::S, 0, || {
         transform.position -= speed * front;
     });
 
-    keyboard.trigger_on_press(VirtualKeyCode::D, || {
+    keyboard.trigger_on_press(VirtualKeyCode::D, 0, || {
         transform.position += glm::normalize(&front.cross(&up)) * speed;
     });
 
-    keyboard.trigger_on_press(VirtualKeyCode::A, || {
+    keyboard.trigger_on_press(VirtualKeyCode::A, 0, || {
         transform.position -= glm::normalize(&front.cross(&up)) * speed;
     });
 
-    keyboard.trigger_on_press(VirtualKeyCode::Q, || {
+    keyboard.trigger_on_press(VirtualKeyCode::Q, 0, || {
         transform.position -= speed * up;
     });
 
-    keyboard.trigger_on_press(VirtualKeyCode::E, || {
+    keyboard.trigger_on_press(VirtualKeyCode::E, 0, || {
         transform.position += speed * up;
     });
 }
