@@ -1,12 +1,12 @@
 use crate::constants::{GAME_TITLE, SCREEN_HEIGHT, SCREEN_WIDTH};
 use crate::opengl::OpenGL;
-use std::collections::HashMap;
-use std::time::{Instant, Duration};
 use glutin::{
     dpi, ContextBuilder, DeviceEvent, ElementState, Event, EventsLoop,
     GlWindow, ModifiersState, MouseButton, VirtualKeyCode, WindowBuilder,
     WindowEvent,
 };
+use std::collections::HashMap;
+use std::time::Instant;
 
 pub struct Window {
     pub should_close: bool,
@@ -111,31 +111,44 @@ impl Window {
     }
 }
 
+/// Used to store information when a specified key is pressed.
+/// The `once` field is used for all press once methods.
+pub struct KeyState {
+    time: Instant,
+    once: bool,
+}
+
 /// Store all key events.
-/// We use a vector for storing multiple key press at the same time.
+/// We use a hashmap for storing multiple key press at the same time.
 pub struct KeyEvents {
-    pub keycodes: HashMap<VirtualKeyCode, Instant>,
+    pub keycodes: HashMap<VirtualKeyCode, KeyState>,
     pub modifiers: ModifiersState,
 }
 
 impl KeyEvents {
-    /// Will call the closure only if the given keycode is pressed.
-    pub fn trigger_on_press(
+    /// Will call only once the closure when the given closure is pressed.
+    pub fn once(
         &mut self,
         keycode: VirtualKeyCode,
-        delay: u64,
+        mut callback: impl FnMut(),
+    ) {
+        if let Some(pressed) = self.keycodes.get_mut(&keycode) {
+            if !pressed.once {
+                pressed.once = true;
+                callback();
+            }
+        }
+    }
+
+    /// Will call the closure only if the given keycode is pressed.
+    pub fn pressed(
+        &mut self,
+        keycode: VirtualKeyCode,
         mut callback: impl FnMut(),
     ) {
         if let Some(value) = self.keycodes.get_mut(&keycode) {
-            let is_delay_passed = value
-                .elapsed()
-                .checked_sub(Duration::from_millis(delay))
-                .is_some();
-
-            if is_delay_passed {
-                *value = Instant::now();
-                callback();
-            }
+            value.time = Instant::now();
+            callback();
         }
     }
 
@@ -146,11 +159,15 @@ impl KeyEvents {
 
     /// Add keycode if not already there.
     pub fn add_keycode(&mut self, keycode: VirtualKeyCode) {
-        self.keycodes.entry(keycode).or_insert_with(Instant::now);
+        self.keycodes.entry(keycode).or_insert_with(|| KeyState {
+            time: Instant::now(),
+            once: false,
+        });
     }
 
-    /// Remove keycode.
-    /// TODO: We should use `remove_item` method when available in stable toolchain.
+    /// Remove specified keycode.
+    /// TODO: We should use `remove_item` method when available
+    /// in the stable toolchain.
     pub fn remove_keycode(&mut self, keycode: VirtualKeyCode) {
         if self.keycodes.contains_key(&keycode) {
             self.keycodes.remove(&keycode);
@@ -181,11 +198,7 @@ pub struct MouseEvents {
 
 impl MouseEvents {
     /// Will call the closure only if the given mouse button is pressed.
-    pub fn trigger_on_press(
-        &self,
-        button: MouseButton,
-        mut callback: impl FnMut(),
-    ) {
+    pub fn pressed(&self, button: MouseButton, mut callback: impl FnMut()) {
         if let Some(pressed_button) = self.button {
             if pressed_button == button && self.is_pressed {
                 callback();

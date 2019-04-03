@@ -46,33 +46,24 @@ use crate::{
     game_state::GameState,
     opengl::OpenGL,
     shader::Shader,
-    systems::{EditorCamera, Renderer, Physic},
+    systems::{EditorCamera, Renderer, Physic, Player},
 };
 use notify::{RecommendedWatcher, RecursiveMode, Watcher};
 use std::sync::mpsc::channel;
 use std::time::Duration;
 
-use crate::components::Collider;
-use ncollide3d::shape::{Cuboid, ShapeHandle};
-use nalgebra_glm as glm;
-
 fn main() -> Result<(), notify::Error> {
     let mut state = GameState::new();
     let mut game_loop = GameLoop::new();
     let mut world = World::new();
-    let mut editor = Editor::default();
-
-
-    // Ground test.
-    let shape = ShapeHandle::new(Cuboid::new(glm::vec3(5., 0.04, 5.)));
-    let position = glm::vec3(0., -0.5, 0.);
-    Collider::new(&mut state.physic_world, shape, position, 1.);
+    let mut editor = Editor::new(true);
 
     // Load scene for the first time.
     world.load_entities(helpers::load_scene("scene_1.ron", &mut state));
 
     // Add systems
     world.add_system(EditorCamera::default());
+    world.add_system(Player::default());
     world.add_system(Physic::default());
     world.add_system(Renderer::default());
 

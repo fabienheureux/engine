@@ -1,6 +1,7 @@
 use nalgebra_glm as glm;
 use nphysics3d::{
-    object::{Body, BodyHandle, ColliderDesc, RigidBodyDesc},
+    math::Velocity,
+    object::{Body, BodyHandle, BodyStatus, ColliderDesc, RigidBodyDesc},
     world::World,
 };
 
@@ -15,9 +16,17 @@ impl RigidBody {
         mut world: &mut World<f32>,
         mass: f32,
         transform: glm::TVec3<f32>,
+        status: BodyStatus,
         collider: Option<ColliderDesc<f32>>,
     ) -> Self {
-        let mut body = RigidBodyDesc::new().mass(mass).translation(transform);
+        let mut body = RigidBodyDesc::new()
+            .mass(mass)
+            .translation(transform)
+            .status(status);
+
+        if status == BodyStatus::Kinematic {
+            body.set_velocity(Velocity::linear(0., 0.1, 0.));
+        }
 
         if let Some(collider) = &collider {
             body.add_collider(collider);
@@ -34,6 +43,12 @@ impl RigidBody {
     pub fn get<'a>(&self, world: &'a World<f32>) -> &'a Body<f32> {
         world
             .body(self.handle)
+            .expect("Handle not register in physic world")
+    }
+
+    pub fn get_mut<'a>(&self, world: &'a mut World<f32>) -> &'a mut Body<f32> {
+        world
+            .body_mut(self.handle)
             .expect("Handle not register in physic world")
     }
 }

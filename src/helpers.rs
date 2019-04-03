@@ -1,14 +1,18 @@
 use crate::{
-    components::{Camera, Light, Mesh, Primitives, RigidBody, Transform, Collider},
+    components::{
+        Camera, Collider, Player, Light, Mesh, Primitives, RigidBody,
+        Transform,
+    },
     constants::SCENE_PATH,
     ecs::Entity,
     game_state::GameState,
 };
+use nalgebra_glm as glm;
+use ncollide3d::shape::{Cuboid, ShapeHandle};
+use nphysics3d::object::BodyStatus;
 use ron::de;
 use serde::Deserialize;
 use std::fs::File;
-use ncollide3d::shape::{Cuboid, ShapeHandle};
-use nalgebra_glm as glm;
 
 static mut IS_FIRST_LOAD: bool = true;
 
@@ -28,6 +32,7 @@ enum Elements {
     Cube(usize, Transform, String, Body),
     Plane(usize, Transform, String),
     LightSource(usize, Transform, Light),
+    Player(usize, Transform, String, Body),
 }
 
 pub fn load_scene(path: &str, state: &mut GameState) -> Vec<Entity> {
@@ -65,16 +70,17 @@ pub fn load_scene(path: &str, state: &mut GameState) -> Vec<Entity> {
                 let mesh =
                     Mesh::new(Primitives::Cube, opt_tex, "default_material");
 
-                let shape = ShapeHandle::new(Cuboid::new(glm::vec3(0.5, 0.5, 0.5)));
+                let shape =
+                    ShapeHandle::new(Cuboid::new(glm::vec3(0.5, 0.5, 0.5)));
                 let collider = Collider::simple(shape, glm::vec3(0., 0., 0.));
 
                 let rigid_body = RigidBody::new(
                     &mut state.physic_world,
                     body.mass,
                     transform.position,
-                    Some(collider)
+                    BodyStatus::Dynamic,
+                    Some(collider),
                 );
-
 
                 let entity = Entity::from_file(id)
                     .with::<Transform>(transform)
@@ -95,8 +101,50 @@ pub fn load_scene(path: &str, state: &mut GameState) -> Vec<Entity> {
                 let mesh =
                     Mesh::new(Primitives::Plane, opt_tex, "default_material");
 
+                let shape =
+                    ShapeHandle::new(Cuboid::new(glm::vec3(5., 0.04, 5.)));
+                let collider = Collider::new(
+                    &mut state.physic_world,
+                    shape,
+                    transform.position,
+                    1.,
+                );
+
+                let entity = Entity::from_file(id)
+                    .with::<Collider>(collider)
+                    .with::<Transform>(transform)
+                    .with::<Mesh>(mesh);
+
+                entities.push(entity);
+            }
+            Elements::Player(id, transform, texture, body) => {
+                let texture = texture.as_str();
+                let mut opt_tex = None;
+
+                if !texture.is_empty() {
+                    opt_tex = Some(asset_manager.add_texture(texture));
+                    asset_manager.gl_load(texture);
+                }
+
+                let mesh =
+                    Mesh::new(Primitives::Cube, opt_tex, "default_material");
+
+                let shape =
+                    ShapeHandle::new(Cuboid::new(glm::vec3(0.5, 0.5, 0.5)));
+                let collider = Collider::simple(shape, glm::vec3(0., 0., 0.));
+
+                let rigid_body = RigidBody::new(
+                    &mut state.physic_world,
+                    body.mass,
+                    transform.position,
+                    BodyStatus::Kinematic,
+                    Some(collider),
+                );
+
                 let entity = Entity::from_file(id)
                     .with::<Transform>(transform)
+                    .with::<RigidBody>(rigid_body)
+                    .with::<Player>(Player::default())
                     .with::<Mesh>(mesh);
 
                 entities.push(entity);

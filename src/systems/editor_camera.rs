@@ -20,6 +20,7 @@ impl System for EditorCamera {
     }
 
     fn process(&self, entity: &mut Entity, state: &mut GameState) {
+        // TODO: wtf!?
         if !state.editor_mode {
             return;
         }
@@ -29,7 +30,7 @@ impl System for EditorCamera {
         let mouse = window.get_mouse_events();
 
         // We want to hide the cursor when we move our camera.
-        mouse.trigger_on_press(MouseButton::Right, || {
+        mouse.pressed(MouseButton::Right, || {
             window.hide_cursor(true);
 
             if mouse.has_moved {
@@ -48,9 +49,7 @@ impl System for EditorCamera {
 
         let cam_pos = format!(
             "({:.1},{:.1},{:.1})",
-            transform.position.x,
-            transform.position.y,
-            transform.position.z
+            transform.position.x, transform.position.y, transform.position.z
         );
         state.cam_pos = cam_pos;
 
@@ -82,29 +81,31 @@ fn update_pos(entity: &mut Entity, keyboard: &mut KeyEvents, time: &Time) {
         speed *= 2.5;
     }
 
-    keyboard.trigger_on_press(VirtualKeyCode::W, 0, || {
-        transform.position += speed * front;
-    });
+    if keyboard.modifiers.shift {
+        keyboard.pressed(VirtualKeyCode::W, || {
+            transform.position += speed * front;
+        });
 
-    keyboard.trigger_on_press(VirtualKeyCode::S, 0, || {
-        transform.position -= speed * front;
-    });
+        keyboard.pressed(VirtualKeyCode::S, || {
+            transform.position -= speed * front;
+        });
 
-    keyboard.trigger_on_press(VirtualKeyCode::D, 0, || {
-        transform.position += glm::normalize(&front.cross(&up)) * speed;
-    });
+        keyboard.pressed(VirtualKeyCode::D, || {
+            transform.position += glm::normalize(&front.cross(&up)) * speed;
+        });
 
-    keyboard.trigger_on_press(VirtualKeyCode::A, 0, || {
-        transform.position -= glm::normalize(&front.cross(&up)) * speed;
-    });
+        keyboard.pressed(VirtualKeyCode::A, || {
+            transform.position -= glm::normalize(&front.cross(&up)) * speed;
+        });
 
-    keyboard.trigger_on_press(VirtualKeyCode::Q, 0, || {
-        transform.position -= speed * up;
-    });
+        keyboard.pressed(VirtualKeyCode::Q, || {
+            transform.position -= speed * up;
+        });
 
-    keyboard.trigger_on_press(VirtualKeyCode::E, 0, || {
-        transform.position += speed * up;
-    });
+        keyboard.pressed(VirtualKeyCode::E, || {
+            transform.position += speed * up;
+        });
+    }
 }
 
 // We are using the delta time for smoother spin.

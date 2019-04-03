@@ -7,24 +7,27 @@ pub struct Editor {
 }
 
 impl Editor {
+    pub fn new(enabled_physics: bool) -> Self {
+        Self { enabled_physics }
+    }
+
     pub fn run(&mut self, state: &mut GameState) {
         let keyboard = state.window.get_keyboard_events();
 
-
         if keyboard.modifiers.shift {
-            keyboard.trigger_on_press(VirtualKeyCode::P, 30, || {
+            keyboard.once(VirtualKeyCode::P, || {
                 self.enabled_physics = !self.enabled_physics;
             });
 
-            keyboard.trigger_on_press(VirtualKeyCode::L, 0, || {
+            keyboard.once(VirtualKeyCode::L, || {
                 OpenGL::line_mode();
             });
 
-            keyboard.trigger_on_press(VirtualKeyCode::F, 0, || {
+            keyboard.once(VirtualKeyCode::F, || {
                 OpenGL::fill_mode();
             });
 
-            keyboard.trigger_on_press(VirtualKeyCode::F, 0, || {
+            keyboard.once(VirtualKeyCode::F, || {
                 OpenGL::fill_mode();
             });
         }
