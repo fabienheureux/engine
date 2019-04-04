@@ -9,9 +9,8 @@ type Vector3 = glm::TVec3<f32>;
 #[derive(Debug, Clone, Deserialize)]
 pub struct Transform {
     pub position: Vector3,
-    pub rotate: Vector3,
     pub scale: Vector3,
-    pub quaternion: nalgebra::geometry::UnitQuaternion<f32>,
+    pub rotation: nalgebra::geometry::UnitQuaternion<f32>,
 }
 
 impl Transform {
@@ -19,7 +18,6 @@ impl Transform {
     pub fn new(position: Vector3, rotate: Vector3, scale: Vector3) -> Self {
         Self {
             position,
-            rotate,
             scale,
             ..Self::default()
         }
@@ -32,9 +30,8 @@ impl Default for Transform {
 
         Self {
             position: init,
-            rotate: init,
             scale: glm::vec3(1., 1., 1.),
-            quaternion: nalgebra::UnitQuaternion::identity()
+            rotation: nalgebra::UnitQuaternion::identity(),
         }
     }
 }

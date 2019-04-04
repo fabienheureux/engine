@@ -23,7 +23,7 @@ impl System for Renderer {
 
         let mut model = glm::Mat4::identity();
 
-        if let Some((axis, angle)) = transform.quaternion.axis_angle() {
+        if let Some((axis, angle)) = transform.rotation.axis_angle() {
             model = glm::rotate(&model, angle, &axis);
         }
 

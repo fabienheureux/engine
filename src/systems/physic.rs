@@ -25,7 +25,7 @@ impl System for Physic {
             let position = part.position();
 
             let transform = entity.get_mut::<Transform>();
-            transform.quaternion = position.rotation;
+            transform.rotation = position.rotation;
             transform.position = position.translation.vector;
         }
     }
