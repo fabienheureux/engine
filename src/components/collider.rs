@@ -1,6 +1,6 @@
 use nphysics3d::{
+    material::{BasicMaterial, MaterialHandle},
     object::{ColliderDesc, ColliderHandle},
-    material::{MaterialHandle, BasicMaterial},
     world::World,
 };
 

@@ -28,7 +28,6 @@ impl System for Renderer {
         }
 
         model = glm::translate(&model, &transform.position);
-
         model = glm::scale(&model, &transform.scale);
 
         let vao = mesh.get_vao();

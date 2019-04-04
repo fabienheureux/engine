@@ -31,35 +31,36 @@ mod editor;
 mod fonts;
 mod game_loop;
 mod game_state;
-mod helpers;
 mod opengl;
+mod scene_loader;
 mod shader;
 mod systems;
 mod time;
 mod window;
 
 use crate::{
-    constants::{SCENE_PATH, SCREEN_HEIGHT, SCREEN_WIDTH},
+    constants::{SCREEN_HEIGHT, SCREEN_WIDTH},
     ecs::World,
     editor::Editor,
     game_loop::GameLoop,
     game_state::GameState,
     opengl::OpenGL,
+    scene_loader::SceneLoader,
     shader::Shader,
-    systems::{EditorCamera, Renderer, Physic, Player},
+    systems::{EditorCamera, Physic, Player, Renderer},
 };
-use notify::{RecommendedWatcher, RecursiveMode, Watcher};
-use std::sync::mpsc::channel;
-use std::time::Duration;
 
 fn main() -> Result<(), notify::Error> {
     let mut state = GameState::new();
     let mut game_loop = GameLoop::new();
     let mut world = World::new();
-    let mut editor = Editor::new(true);
+    let mut editor = Editor::new(true, true);
+
+    let mut scene_loader = SceneLoader::new(2);
+    scene_loader.set_scene("scene_1.ron");
 
     // Load scene for the first time.
-    world.load_entities(helpers::load_scene("scene_1.ron", &mut state));
+    scene_loader.load(&mut world, &mut state);
 
     // Add systems
     world.add_system(EditorCamera::default());
@@ -67,28 +68,19 @@ fn main() -> Result<(), notify::Error> {
     world.add_system(Physic::default());
     world.add_system(Renderer::default());
 
-    // Watch the ressources folder every 2 secs.
-    let (sender, receiver) = channel();
-    let mut watcher: RecommendedWatcher =
-        Watcher::new(sender, Duration::from_secs(2))?;
-    watcher.watch(SCENE_PATH, RecursiveMode::NonRecursive)?;
-
     game_loop.start(|time, fps| {
         state.window.capture();
         state.time = time.clone();
 
-        editor.run(&mut state);
+        editor.check_inputs(&mut state);
+
+        scene_loader.watch(&mut world, &mut state);
 
         if editor.enabled_physics {
             state.physic_world.step();
         }
-        
+
         let running = !state.window.should_close;
-
-        if receiver.try_recv().is_ok() {
-            world.load_entities(helpers::load_scene("scene_1.ron", &mut state));
-        }
-
 
         // First render pass.
         // We render to the scene fbo.
