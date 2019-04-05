@@ -1,4 +1,4 @@
-use crate::{game_state::GameState, opengl::OpenGL, scene_loader::SceneLoader};
+use crate::{game_state::GameState, opengl::OpenGL};
 use glutin::VirtualKeyCode;
 
 #[derive(Default)]

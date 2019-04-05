@@ -4,7 +4,7 @@ use crate::{
 };
 use gl;
 use gl::types::{GLfloat, GLsizei, GLsizeiptr};
-use glutin::{GlContext, GlWindow};
+use glutin::{ContextTrait, WindowedContext};
 use nalgebra_glm as glm;
 use std::ffi::CString;
 use std::os::raw::c_void;
@@ -14,18 +14,19 @@ use std::{mem, ptr};
 pub struct OpenGL;
 
 impl OpenGL {
-    pub fn initialize(gl_window: &GlWindow) {
+    pub fn initialize(window_context: &WindowedContext) {
         unsafe {
-            gl_window
+            window_context
                 .make_current()
                 .expect("Error setting the current context");
 
             gl::load_with(|symbol| {
-                gl_window.get_proc_address(symbol) as *const _
+                window_context.get_proc_address(symbol) as *const _
             });
 
             OpenGL::set_depth_buffer(true);
             gl::Enable(gl::STENCIL_TEST);
+            gl::Enable(gl::MULTISAMPLE);  
             // Specify the default color.
             gl::ClearColor(0.0, 0.0, 0.0, 0.0);
         }

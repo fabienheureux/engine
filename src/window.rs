@@ -2,8 +2,8 @@ use crate::constants::{GAME_TITLE, SCREEN_HEIGHT, SCREEN_WIDTH};
 use crate::opengl::OpenGL;
 use glutin::{
     dpi, ContextBuilder, DeviceEvent, ElementState, Event, EventsLoop,
-    GlWindow, ModifiersState, MouseButton, VirtualKeyCode, WindowBuilder,
-    WindowEvent,
+    ModifiersState, MouseButton, VirtualKeyCode, WindowBuilder, WindowEvent,
+    WindowedContext,
 };
 use std::collections::HashMap;
 use std::time::Instant;
@@ -11,7 +11,7 @@ use std::time::Instant;
 pub struct Window {
     pub should_close: bool,
     pub event_loop: EventsLoop,
-    pub gl_window: GlWindow,
+    pub context: WindowedContext,
     key_events: KeyEvents,
     mouse_events: MouseEvents,
 }
@@ -27,16 +27,18 @@ impl Window {
             .with_title(GAME_TITLE)
             .with_dimensions(dimensions);
 
-        let context = ContextBuilder::new().with_vsync(true);
         let event_loop = EventsLoop::new();
-        let gl_window = GlWindow::new(window, context, &event_loop)
-            .expect("Error creating opengl window");
+        let context = ContextBuilder::new()
+            .with_vsync(true)
+            .with_multisampling(4)
+            .build_windowed(window, &event_loop)
+            .unwrap();
 
-        OpenGL::initialize(&gl_window);
+        OpenGL::initialize(&context);
 
         Self {
             should_close: false,
-            gl_window,
+            context: context,
             event_loop,
             key_events: KeyEvents::default(),
             mouse_events: MouseEvents::default(),
@@ -44,19 +46,19 @@ impl Window {
     }
 
     pub fn swap_gl(&self) {
-        self.gl_window
+        self.context
             .swap_buffers()
             .expect("Problem with gl buffer swap");
     }
 
     /// Hide and Grab the cursor.
     pub fn hide_cursor(&self, is_hide: bool) {
-        self.gl_window
+        self.context
             .window()
             .grab_cursor(is_hide)
             .expect("Error when grabbing the cursor");
 
-        self.gl_window.window().hide_cursor(is_hide);
+        self.context.window().hide_cursor(is_hide);
     }
 
     pub fn capture(&mut self) {

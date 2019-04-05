@@ -41,26 +41,26 @@
       specular: [1., 1., 1.],
     )
   ),
-  Cube(
-    4,
-    Transform(
-      position: [0., 30., 0.],
-      scale: [1., 1., 1.],
-      rotation: [0., 0., 0., 0.],
-    ),
-    "pos_debug.png",
-    Body(mass: 1.2),
-  ),
-  Cube(
-    5,
-    Transform(
-      position: [0., 20., 0.],
-      scale: [1., 1., 1.],
-      rotation: [0., 0., 0., 0.],
-    ),
-    "pos_debug.png",
-    Body(mass: 1.2),
-  ),
+  // Cube(
+  //   4,
+  //   Transform(
+  //     position: [0., 30., 0.],
+  //     scale: [1., 1., 1.],
+  //     rotation: [0., 0., 0., 0.],
+  //   ),
+  //   "pos_debug.png",
+  //   Body(mass: 1.2),
+  // ),
+  // Cube(
+  //   5,
+  //   Transform(
+  //     position: [0., 20., 0.],
+  //     scale: [1., 1., 1.],
+  //     rotation: [0., 0., 0., 0.],
+  //   ),
+  //   "pos_debug.png",
+  //   Body(mass: 1.2),
+  // ),
   Player(
     6,
     Transform(
