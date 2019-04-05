@@ -29,7 +29,7 @@ impl Window {
 
         let event_loop = EventsLoop::new();
         let context = ContextBuilder::new()
-            .with_vsync(true)
+            // .with_vsync(true)
             .with_multisampling(4)
             .build_windowed(window, &event_loop)
             .unwrap();

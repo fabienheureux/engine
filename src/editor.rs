@@ -1,20 +1,13 @@
-use crate::{game_state::GameState, opengl::OpenGL};
+use crate::game_state::GameState;
 use glutin::VirtualKeyCode;
+use std::default::Default;
 
-#[derive(Default)]
 pub struct Editor {
     pub enabled_physics: bool,
-    pub enabled_scene_reload: bool,
+    pub enabled_wireframe_mode: bool,
 }
 
 impl Editor {
-    pub fn new(enabled_physics: bool, enabled_scene_reload: bool) -> Self {
-        Self {
-            enabled_physics,
-            enabled_scene_reload,
-        }
-    }
-
     pub fn check_inputs(&mut self, state: &mut GameState) {
         let keyboard = state.window.get_keyboard_events();
 
@@ -24,16 +17,17 @@ impl Editor {
             });
 
             keyboard.once(VirtualKeyCode::L, || {
-                OpenGL::line_mode();
+                self.enabled_wireframe_mode = !self.enabled_wireframe_mode;
             });
+        }
+    }
+}
 
-            keyboard.once(VirtualKeyCode::F, || {
-                OpenGL::fill_mode();
-            });
-
-            keyboard.once(VirtualKeyCode::F, || {
-                OpenGL::fill_mode();
-            });
+impl Default for Editor {
+    fn default() -> Self {
+        Self {
+            enabled_physics: true,
+            enabled_wireframe_mode: false,
         }
     }
 }

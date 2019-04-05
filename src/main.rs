@@ -54,7 +54,7 @@ fn main() -> Result<(), notify::Error> {
     let mut state = GameState::new();
     let mut game_loop = GameLoop::new();
     let mut world = World::new();
-    let mut editor = Editor::new(true, true);
+    let mut editor = Editor::default();
 
     let mut scene_loader = SceneLoader::new(2);
     scene_loader.set_scene("scene_1.ron");
@@ -89,7 +89,11 @@ fn main() -> Result<(), notify::Error> {
         OpenGL::set_depth_buffer(true);
         OpenGL::clear_color((0., 0., 0.));
 
+        if editor.enabled_wireframe_mode {
+            OpenGL::line_mode();
+        }
         world.run(&mut state);
+        OpenGL::fill_mode();
 
         // Skybox pass.
         unsafe { gl::DepthFunc(gl::LEQUAL) }

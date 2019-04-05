@@ -2,7 +2,7 @@ use crate::time::Time;
 use std::time::Duration;
 
 // 16.6ms per frame for 60 frames per second.
-const FPS: u32 = 60;
+const FPS: u32 = 120;
 
 #[derive(Default)]
 pub struct GameLoop {
