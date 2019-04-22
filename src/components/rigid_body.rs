@@ -1,7 +1,10 @@
 use nalgebra_glm as glm;
 use nphysics3d::{
     math::Velocity,
-    object::{Body, BodyHandle, BodyStatus, ColliderDesc, RigidBodyDesc},
+    object::{
+        Body, BodyHandle, BodyStatus, ColliderDesc, RigidBody as NRigidBody,
+        RigidBodyDesc,
+    },
     world::World,
 };
 
@@ -25,7 +28,7 @@ impl RigidBody {
             .status(status);
 
         if status == BodyStatus::Kinematic {
-            body.set_velocity(Velocity::linear(0., 0.1, 0.));
+            body.set_velocity(Velocity::linear(0., 0., 0.));
         }
 
         if let Some(collider) = &collider {
@@ -40,15 +43,33 @@ impl RigidBody {
         Self { mass, handle }
     }
 
-    pub fn get<'a>(&self, world: &'a World<f32>) -> &'a Body<f32> {
+    pub fn get_body<'a>(&self, world: &'a World<f32>) -> &'a Body<f32> {
         world
             .body(self.handle)
             .expect("Handle not register in physic world")
     }
 
-    pub fn get_mut<'a>(&self, world: &'a mut World<f32>) -> &'a mut Body<f32> {
+    pub fn get_mut_body<'a>(
+        &self,
+        world: &'a mut World<f32>,
+    ) -> &'a mut Body<f32> {
         world
             .body_mut(self.handle)
+            .expect("Handle not register in physic world")
+    }
+
+    pub fn get<'a>(&self, world: &'a World<f32>) -> &'a NRigidBody<f32> {
+        world
+            .rigid_body(self.handle)
+            .expect("Handle not register in physic world")
+    }
+
+    pub fn get_mut<'a>(
+        &self,
+        world: &'a mut World<f32>,
+    ) -> &'a mut NRigidBody<f32> {
+        world
+            .rigid_body_mut(self.handle)
             .expect("Handle not register in physic world")
     }
 }

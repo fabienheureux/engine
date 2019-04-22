@@ -1,4 +1,4 @@
-/// This is a game engine in development. This engine is
+
 /// the fondation for a pseudo-3D game.
 ///
 /// TODO
@@ -74,6 +74,7 @@ fn main() -> Result<(), notify::Error> {
 
         editor.check_inputs(&mut state);
 
+        state.physic_world.set_timestep(time.dt as f32);
         scene_loader.watch(&mut world, &mut state);
 
         if editor.enabled_physics {

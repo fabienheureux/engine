@@ -4,8 +4,9 @@ use crate::{
     ecs::{Entity, System, World},
 };
 use glutin::VirtualKeyCode;
+use nalgebra as na;
 use nalgebra_glm as glm;
-use nphysics3d::math::{Force, ForceType};
+use na::{geometry::Translation};
 use std::any::TypeId;
 
 #[derive(Debug, Default)]
@@ -21,18 +22,40 @@ impl System for Player {
     }
 
     fn process(&self, entity: &mut Entity, state: &mut GameState) {
-        let rigid = entity.get::<RigidBody>();
+        let rigid = entity.get_mut::<RigidBody>();
         let body = rigid.get_mut(&mut state.physic_world);
 
+        let time = &state.time;
         let keyboard = state.window.get_keyboard_events();
 
-        keyboard.pressed(VirtualKeyCode::W, || {
-            body.apply_force(
-                0,
-                &Force::linear(glm::vec3(0., 10., 0.)),
-                ForceType::VelocityChange,
-                true,
-            );
+        let speed = 0.8 * time.dt as f32;
+        let mut vector = glm::vec3(0., 0., 0.);
+
+        // Editor move.
+        if keyboard.modifiers.shift {
+            return;
+        }
+
+        keyboard.pressed(VirtualKeyCode::D, || {
+            vector.x = speed
         });
+
+        keyboard.pressed(VirtualKeyCode::A, || {
+            vector.x = -speed
+        });
+
+        keyboard.pressed(VirtualKeyCode::W, || {
+            vector.z = -speed
+        });
+
+        keyboard.pressed(VirtualKeyCode::S, || {
+            vector.z = speed
+        });
+
+        let translation = Translation::from(vector);
+
+        let mut position = body.position().clone();
+        position.append_translation_mut(&translation);
+        body.set_position(position);
     }
 }
