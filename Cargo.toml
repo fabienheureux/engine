@@ -16,7 +16,6 @@ notify="4.0.0"
 rusttype = "0.7.5"
 nphysics3d = "0.11.1"
 ncollide3d = "0.19"
-rayon = "1.0"
 
 [dependencies.nalgebra]
 version =  "0.18"

@@ -1,5 +1,5 @@
 use crate::{
-    asset_manager::{AssetManager, Texture, Wrapper},
+    asset_manager::{AssetManager, Texture},
     constants::{SCREEN_HEIGHT, SCREEN_WIDTH},
     fonts::GameFont,
     opengl::OpenGL,
@@ -16,7 +16,7 @@ pub struct GameState {
     pub camera_ubo: u32,
     pub lights_ubo: u32,
     pub editor_mode: bool,
-    pub asset_manager: Wrapper,
+    pub asset_manager: AssetManager,
 
     pub screen_vao: u32,
     pub scene_fbo: (u32, u32),
@@ -42,7 +42,7 @@ impl GameState {
 
         let lights_ubo = OpenGL::create_lights_ubo(1);
 
-        let mut asset_manager = Wrapper::default();
+        let mut asset_manager = AssetManager::default();
 
         asset_manager.add_shader("default", "default", "default");
         asset_manager.add_shader(
@@ -59,10 +59,6 @@ impl GameState {
         asset_manager.add_shader("text", "text", "text");
 
         // Load skybox data.
-        // TODO: Load real skybox textures after fixing why it takes
-        // so much time to load.
-        // asset_manager.add_texture("skybox_up.png");
-
         asset_manager.add_textures(vec![
             "skybox_up.png",
             "skybox_dn.png",
@@ -73,12 +69,12 @@ impl GameState {
         ]);
 
         let skybox: Vec<&Texture> = vec![
+            asset_manager.get_ressource::<Texture>("skybox_lf.png"),
+            asset_manager.get_ressource::<Texture>("skybox_rt.png"),
             asset_manager.get_ressource::<Texture>("skybox_up.png"),
-            asset_manager.get_ressource::<Texture>("skybox_up.png"),
-            asset_manager.get_ressource::<Texture>("skybox_up.png"),
-            asset_manager.get_ressource::<Texture>("skybox_up.png"),
-            asset_manager.get_ressource::<Texture>("skybox_up.png"),
-            asset_manager.get_ressource::<Texture>("skybox_up.png"),
+            asset_manager.get_ressource::<Texture>("skybox_dn.png"),
+            asset_manager.get_ressource::<Texture>("skybox_ft.png"),
+            asset_manager.get_ressource::<Texture>("skybox_bk.png"),
         ];
 
         let shaders = asset_manager.get_ressources::<Shader>();
