@@ -40,22 +40,12 @@ impl AssetManager {
         let key = String::from(path);
 
         if !self.assets.contains_key(path) {
-            println!("Loading texture: {}", path);
-            let texture_path = String::from([TEXTURE_PATH, path].join(""));
-            let texture = Self::memory_load(texture_path.as_str());
-            let (width, height) = texture.dimensions();
+            let texture = AssetManager::load_texture(path);
 
             let indice = self.storage.data.len();
-
-            let texture = Box::new(Texture {
-                raw: texture.to_rgba().into_raw(),
-                width: width as i32,
-                height: height as i32,
-            });
-
-            dbg!("Texture finished to load!");
-            self.storage.data.insert(indice, texture);
+            self.storage.data.insert(indice, Box::new(texture));
             self.assets.insert(key.clone(), Asset::new(indice, None));
+            dbg!("Texture finished to load!");
         }
 
         key
@@ -68,28 +58,14 @@ impl AssetManager {
         let mut iter = rx.try_iter();
 
         paths.into_iter().for_each(|path| {
-            let is_contains = self.assets.contains_key(path);
             let tx = tx.clone();
 
-            handles.push(thread::spawn(move || {
-                if !is_contains {
-                    println!("Loading texture: {}", path);
-
-                    let texture_path =
-                        String::from([TEXTURE_PATH, path].join(""));
-                    let texture =
-                        AssetManager::memory_load(texture_path.as_str());
-                    let (width, height) = texture.dimensions();
-
-                    let texture = Texture {
-                        raw: texture.to_rgba().into_raw(),
-                        width: width as i32,
-                        height: height as i32,
-                    };
-
+            if !self.assets.contains_key(path) {
+                handles.push(thread::spawn(move || {
+                    let texture = AssetManager::load_texture(path);
                     let _ = tx.send((texture, path));
-                }
-            }));
+                }));
+            }
         });
 
         handles.into_iter().enumerate().for_each(|(index, handle)| {
@@ -188,6 +164,22 @@ impl AssetManager {
     fn memory_load(path: &str) -> image::DynamicImage {
         let path = Path::new(path);
         image::open(path).expect("Failed to load image")
+    }
+
+    fn load_texture(path: &str) -> Texture {
+        println!("Loading texture: {}", path);
+
+        let texture_path = String::from([TEXTURE_PATH, path].join(""));
+        let texture = AssetManager::memory_load(texture_path.as_str());
+        let (width, height) = texture.dimensions();
+
+        let texture = Texture {
+            raw: texture.to_rgba().into_raw(),
+            width: width as i32,
+            height: height as i32,
+        };
+
+        (texture)
     }
 }
 
