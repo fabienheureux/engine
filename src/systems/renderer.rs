@@ -23,11 +23,12 @@ impl System for Renderer {
 
         let mut model = glm::Mat4::identity();
 
+        model = glm::translate(&model, &transform.position);
+
         if let Some((axis, angle)) = transform.rotation.axis_angle() {
             model = glm::rotate(&model, angle, &axis);
         }
 
-        model = glm::translate(&model, &transform.position);
         model = glm::scale(&model, &transform.scale);
 
         let vao = mesh.get_vao();
