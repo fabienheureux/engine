@@ -51,7 +51,7 @@ impl AssetManager {
     }
 
     pub fn add_textures(&mut self, paths: Vec<&'static str>) {
-        let mut handles: Vec<thread::JoinHandle<(Texture, &str)>> = vec![];
+        let mut handles: Vec<thread::JoinHandle<_>> = vec![];
         let indice = self.storage.data.len();
 
         paths.into_iter().for_each(|path| {
