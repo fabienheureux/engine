@@ -1,12 +1,11 @@
 use crate::GameState;
 use crate::{
-    components::{Light, Mesh, Player, RigidBody, Transform},
+    components::{Light, Mesh, Transform},
     ecs::{Entity, System, World},
     opengl::OpenGL,
     shader::Shader,
 };
 use nalgebra_glm as glm;
-use nalgebra as na;
 use std::any::TypeId;
 
 #[derive(Debug, Default)]

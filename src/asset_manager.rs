@@ -1,11 +1,7 @@
 use crate::{constants::TEXTURE_PATH, opengl::OpenGL, shader::Shader};
 use image;
 use image::GenericImageView;
-use std::any::Any;
-use std::collections::HashMap;
-use std::marker::Send;
-use std::path::Path;
-use std::thread;
+use std::{any::Any, collections::HashMap, marker::Send, path::Path, thread};
 
 /// Index of an asset in the storage.
 type Indice = usize;

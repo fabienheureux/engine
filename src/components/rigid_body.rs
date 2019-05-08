@@ -43,6 +43,7 @@ impl RigidBody {
         Self { mass, handle }
     }
 
+    #[allow(unused)]
     pub fn get_body<'a>(&self, world: &'a World<f32>) -> &'a Body<f32> {
         world
             .body(self.handle)
@@ -58,6 +59,7 @@ impl RigidBody {
             .expect("Handle not register in physic world")
     }
 
+    #[allow(unused)]
     pub fn get<'a>(&self, world: &'a World<f32>) -> &'a NRigidBody<f32> {
         world
             .rigid_body(self.handle)
