@@ -119,6 +119,7 @@ impl Entity {
 }
 
 pub trait System: Debug {
+
     fn get_targets(&self) -> Vec<TypeId> {
         vec![]
     }

@@ -5,7 +5,6 @@ use std::any::Any;
 use std::collections::HashMap;
 use std::marker::Send;
 use std::path::Path;
-use std::sync::mpsc;
 use std::thread;
 
 /// Index of an asset in the storage.
@@ -52,27 +51,22 @@ impl AssetManager {
     }
 
     pub fn add_textures(&mut self, paths: Vec<&'static str>) {
-        let mut handles: Vec<thread::JoinHandle<()>> = vec![];
+        let mut handles: Vec<thread::JoinHandle<(Texture, &str)>> = vec![];
         let indice = self.storage.data.len();
-        let (tx, rx) = mpsc::channel();
-        let mut iter = rx.try_iter();
 
         paths.into_iter().for_each(|path| {
-            let tx = tx.clone();
-
             if !self.assets.contains_key(path) {
-                handles.push(thread::spawn(move || {
+                handles.push(thread::spawn(move || -> (Texture, &str) {
                     let texture = AssetManager::load_texture(path);
-                    let _ = tx.send((texture, path));
+                    (texture, path)
                 }));
             }
         });
 
         handles.into_iter().enumerate().for_each(|(index, handle)| {
-            // Wait for every threads to finish.
-            let _ = handle.join();
-
-            let (texture, path) = iter.next().unwrap();
+            // Wait for every threads to finish then
+            // get the returned value.
+            let (texture, path) = handle.join().unwrap();
 
             let indice = indice + index;
             self.storage.data.insert(indice, Box::new(texture));
