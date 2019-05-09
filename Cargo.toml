@@ -16,7 +16,11 @@ notify="4.0.0"
 rusttype = "0.7.5"
 nphysics3d = "0.11.1"
 ncollide3d = "0.19"
+gui = { path = "gui" }
 
 [dependencies.nalgebra]
 version =  "0.18"
 features = ["serde-serialize"]
+
+[workspace]
+members = ["gui"]

@@ -1,4 +1,3 @@
-
 /// the fondation for a pseudo-3D game.
 ///
 /// TODO
@@ -49,12 +48,15 @@ use crate::{
     shader::Shader,
     systems::{EditorCamera, Physic, Player, Renderer},
 };
+use gui::GUI;
 
 fn main() -> Result<(), notify::Error> {
     let mut state = GameState::new();
     let mut game_loop = GameLoop::new();
     let mut world = World::new();
     let mut editor = Editor::default();
+
+    let _ = GUI::default();
 
     let mut scene_loader = SceneLoader::new(2);
     scene_loader.set_scene("scene_1.ron");
