@@ -15,7 +15,7 @@ use serde::Deserialize;
 use std::fs::File;
 
 use notify::{
-    fsevent::FsEventWatcher, DebouncedEvent, RecommendedWatcher, RecursiveMode,
+    DebouncedEvent, RecommendedWatcher, RecursiveMode,
     Watcher,
 };
 use std::sync::mpsc::{channel, Receiver};
@@ -47,7 +47,7 @@ pub struct SceneLoader {
     current: Option<String>,
     receiver: Receiver<DebouncedEvent>,
     #[allow(unused)]
-    watcher: FsEventWatcher,
+    watcher: RecommendedWatcher,
 }
 
 impl SceneLoader {
