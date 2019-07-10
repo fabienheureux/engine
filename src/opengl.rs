@@ -68,11 +68,11 @@ impl OpenGL {
         }
     }
 
-    pub fn create_fbo() -> (u32, u32) {
+    pub fn create_fbo(dpi_ratio: i32) -> (u32, u32) {
         let fbo = Self::gen_fbo();
         let mut cbo = 1;
 
-        let retina_factor = 2;
+        let retina_factor = dpi_ratio;
 
         unsafe {
             OpenGL::use_fbo(fbo);

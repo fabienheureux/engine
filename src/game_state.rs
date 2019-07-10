@@ -30,6 +30,7 @@ pub struct GameState {
 impl GameState {
     pub fn new() -> Self {
         let window = Window::new();
+        let dpi_ratio = window.context.get_hidpi_factor();
         let projection = glm::perspective(
             45_f32.to_radians(),
             (SCREEN_WIDTH / SCREEN_HEIGHT) as f32,
@@ -85,7 +86,7 @@ impl GameState {
         });
 
         let screen_vao = OpenGL::gen_screen_quad();
-        let scene_fbo = OpenGL::create_fbo();
+        let scene_fbo = OpenGL::create_fbo(dpi_ratio as i32);
 
         let skybox = {
             let tex = OpenGL::load_cubemap(skybox);

@@ -15,7 +15,7 @@ serde= "1.0.85"
 notify="4.0.0"
 rusttype = "0.7.5"
 nphysics3d = "0.11.1"
-ncollide3d = "0.19"
+ncollide3d = "0.19.2"
 gui = { path = "gui" }
 
 [dependencies.nalgebra]
